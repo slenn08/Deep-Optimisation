@@ -27,5 +27,8 @@ class DOBase(nn.Module, ABC):
     @abstractmethod
     def transition(self) -> None:
         pass
- 
-    
+
+    @abstractmethod
+    def loss(self, x : torch.Tensor, *args, **kwargs) -> dict:
+        pass
+

@@ -1,4 +1,6 @@
 import torch
+import torch.nn.functional as F
+
 from torch import nn
 import random
 
@@ -80,3 +82,10 @@ class DO(DOBase):
         self.decoder = nn.Sequential(*([decoder_layer,nn.Tanh()] + list(self.decoder)))
 
         self.num_layers += 1
+    
+    def loss(self, x : torch.Tensor, recon : torch.Tensor,
+             l1_coef : float) -> dict:
+        mse = F.mse_loss(x, recon)
+        l1_loss = sum(p.abs().sum() for p in self.float.parameters())
+        loss = mse + l1_coef * l1_loss
+        return loss.item()
