@@ -9,25 +9,23 @@ class DOBase(nn.Module, ABC):
         super().__init__()
 
     @abstractmethod
-    def forward(self, x : torch.tensor) -> torch.tensor:
+    def forward(self, x : torch.Tensor) -> torch.Tensor:
         pass
 
     @abstractmethod
-    def encode(self, x : torch.tensor, *args, **kwargs) -> torch.tensor:
+    def encode(self, x : torch.Tensor, *args, **kwargs) -> torch.Tensor:
         pass
 
     @abstractmethod
-    def decode(self, z : torch.tensor, *args, **kwargs) -> torch.tensor:
+    def decode(self, z : torch.Tensor, *args, **kwargs) -> torch.Tensor:
         pass
 
     @abstractmethod
-    def step(self, z : torch.tensor, *args, **kwargs) -> torch.tensor:
+    def vary(self, x : torch.Tensor, *args, **kwargs) -> torch.Tensor:
         pass
 
     @abstractmethod
     def transition(self) -> None:
         pass
+ 
     
-    @abstractmethod
-    def vary(self, x : torch.tensor, *args, **kwargs) -> torch.tensor:
-        pass
