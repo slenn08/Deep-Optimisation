@@ -1,9 +1,9 @@
-from torch.utils.data import DataLoader, Dataset
+from torch.utils.data import Dataset
 
 class PopulationDataset(Dataset):
     def __init__(self, X):
         # Extract solutions from population
-        self.X = list(map(lambda x : x[0], X))
+        self.X = X
     
     def __len__(self):
         return len(self.X)

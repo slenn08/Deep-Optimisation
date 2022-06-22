@@ -1,9 +1,11 @@
-from typing import Tuple
 import torch
+from torch.utils.data import DataLoader
 
+from typing import Tuple
 from .Models.DOBase import DOBase
 from .COProblems import OptimizationProblem
 from .Data.Functions import to_int_list
+from .Data.PopulationDataset import PopulationDataset
 
 def optimize_solutions(solutions : torch.Tensor, fitnesses : torch.Tensor,
                             model : DOBase, problem : OptimizationProblem,
@@ -36,3 +38,20 @@ def optimize_solutions(solutions : torch.Tensor, fitnesses : torch.Tensor,
 
         if torch.all(last_improve > change_tolerance):
             return (solutions, fitnesses, evaluations)            
+
+
+def learn_from_population(model : DOBase, solutions : torch.Tensor,
+                          optimizer : torch.optim.Optimizer, batch_size : int,
+                          beta : float=0, l1_reg : int=0, model_type : str="AE") -> None:
+    if model_type == "VAE":
+        learn = lambda s : model.learn_from_sample(s, optimizer, beta)
+    elif model_type == "AE":
+        learn = lambda s : model.learn_from_sample(s, optimizer, l1_reg)
+
+    epochs = 400
+    for epoch in range(epochs):
+        dataset = DataLoader(PopulationDataset(solutions), batch_size=batch_size, shuffle=True)
+        for i,x in enumerate(dataset):
+            loss = learn(x["solution"])
+            # print("Epoch {}/{} - {}/{} - Loss = {}".format(epoch+1,epochs,i,len(population),loss))
+    # show_mu_sd(model, x["solution"])

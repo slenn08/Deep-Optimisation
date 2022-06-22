@@ -75,3 +75,16 @@ class DOVAE(DOBase):
         KLD = -0.5 * torch.mean(1 + logvar - mu.pow(2) - logvar.exp())
         loss = recon_MSE + beta * KLD
         return {"loss" : loss, "recon" : recon_MSE, "kld" : KLD}
+    
+    def learn_from_sample(self, xs : torch.Tensor, optimizer : torch.optim.Optimizer,
+                          beta : float) -> dict:
+        self.train()
+        output, mu, logvar, z = self.forward(xs)
+        loss_dict = self.loss(xs, output, mu, logvar, beta)
+        loss = loss_dict["loss"]
+
+        optimizer.zero_grad()
+        loss.backward()
+        optimizer.step()
+
+        return loss_dict

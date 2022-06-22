@@ -33,3 +33,8 @@ class DOBase(nn.Module, ABC):
     def loss(self, x : torch.Tensor, *args, **kwargs) -> dict:
         pass
 
+    @abstractmethod
+    def learn_from_sample(self, samples : torch.Tensor, optimizer : torch.optim.Optimizer,
+                          *args, **kwargs) -> dict:
+        pass
+

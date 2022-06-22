@@ -89,4 +89,16 @@ class DO(DOBase):
         mse = F.mse_loss(x, recon)
         l1_loss = sum(p.abs().sum() for p in self.float.parameters())
         loss = mse + l1_coef * l1_loss
-        return {"loss" : loss.item(), "recon" : mse, "l1" : l1_loss}
+        return {"loss" : loss, "recon" : mse, "l1" : l1_loss}
+    
+    def learn_from_sample(self, xs : torch.Tensor, optimizer : torch.optim.Optimizer,
+                          l1_coef : float) -> dict:
+        self.train()
+        output, _ = self.forward(xs)
+        loss_dict = self.loss(xs, output, l1_coef)
+        loss = loss_dict["loss"]
+
+        optimizer.zero_grad()
+        loss.backward()
+        optimizer.step()
+        return loss_dict
