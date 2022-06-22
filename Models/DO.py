@@ -5,7 +5,7 @@ import torch.nn.functional as F
 from torch import nn
 import random
 
-from DOBase import DOBase
+from .DOBase import DOBase
 
 class DO(DOBase):
     def __init__(self, input_size : int, dropout_prob : float):

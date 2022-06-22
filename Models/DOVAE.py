@@ -4,9 +4,9 @@ from torch import nn
 from torch.nn.utils import weight_norm
 import torch.nn.functional as F
 
-from DOBase import DOBase
+from .DOBase import DOBase
 
-class DO(DOBase):
+class DOVAE(DOBase):
     def __init__(self, input_size : int, hidden_size : int):
         super().__init__()
         self.mean_layer = None
