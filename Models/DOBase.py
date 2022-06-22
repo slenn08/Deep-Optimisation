@@ -1,3 +1,4 @@
+from typing import List
 import torch
 from torch import nn
 
@@ -9,7 +10,7 @@ class DOBase(nn.Module, ABC):
         super().__init__()
 
     @abstractmethod
-    def forward(self, x : torch.Tensor) -> torch.Tensor:
+    def forward(self, x : torch.Tensor, *args, **kwargs) -> List[torch.Tensor]:
         pass
 
     @abstractmethod
@@ -25,7 +26,7 @@ class DOBase(nn.Module, ABC):
         pass
 
     @abstractmethod
-    def transition(self) -> None:
+    def transition(self, *args, **kwargs) -> None:
         pass
 
     @abstractmethod

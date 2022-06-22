@@ -1,3 +1,4 @@
+from typing import List
 import torch
 import torch.nn.functional as F
 
@@ -7,7 +8,7 @@ import random
 from DOBase import DOBase
 
 class DO(DOBase):
-    def __init__(self, input_size, dropout_prob):
+    def __init__(self, input_size : int, dropout_prob : float):
         super().__init__()
 
         self.encoder = nn.Sequential(nn.Dropout(dropout_prob))
@@ -15,9 +16,9 @@ class DO(DOBase):
         self.input_size = input_size   
         self.num_layers = 1
     
-    def forward(self, x: torch.Tensor) -> torch.Tensor:
+    def forward(self, x: torch.Tensor) -> List[torch.Tensor]:
         z = self.encoder(x)
-        return self.decoder(z), z
+        return [self.decoder(z), z]
     
     def encode(self, x: torch.Tensor, layer : int) -> torch.Tensor:
         return self.encoder[:1+(2*layer)](x)
@@ -88,4 +89,4 @@ class DO(DOBase):
         mse = F.mse_loss(x, recon)
         l1_loss = sum(p.abs().sum() for p in self.float.parameters())
         loss = mse + l1_coef * l1_loss
-        return loss.item()
+        return {"loss" : loss.item(), "recon" : mse, "l1" : l1_loss}
