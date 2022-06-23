@@ -3,7 +3,7 @@ import torch
 
 from abc import abstractmethod, ABC
 
-from .COProblems import OptimizationProblem
+from .COProblems.OptimizationProblem import OptimizationProblem
 from .Models.DOBase import DOBase
 
 class OptimHandler(ABC):

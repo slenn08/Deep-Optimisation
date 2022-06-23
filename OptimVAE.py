@@ -3,7 +3,7 @@ from torch.utils.data import DataLoader
 from typing import Tuple
 
 from .Optimise import assess_changes
-from .COProblems import OptimizationProblem
+from .COProblems.OptimizationProblem import OptimizationProblem
 from .Models.DOVAE import DOVAE
 from .OptimHandler import OptimHandler
 from .Data import PopulationDataset

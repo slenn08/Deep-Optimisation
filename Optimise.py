@@ -2,10 +2,8 @@ import torch
 from torch.utils.data import DataLoader
 
 from typing import Tuple
-from .Models.DOBase import DOBase
-from .COProblems import OptimizationProblem
+from .COProblems.OptimizationProblem import OptimizationProblem
 from .Data.Functions import to_int_list
-from .Data.PopulationDataset import PopulationDataset
 
 # Incomplete, need to make it general for hillclimb and MIV
 def assess_changes(solutions : torch.Tensor, fitnesses : torch.Tensor,
@@ -30,22 +28,7 @@ def assess_changes(solutions : torch.Tensor, fitnesses : torch.Tensor,
         else:
             last_improve[i] += 1
 
-    return evaluations
-
-def optimize_solutions(solutions : torch.Tensor, fitnesses : torch.Tensor,
-                       model : DOBase, problem : OptimizationProblem,
-                       change_tolerance : int) -> Tuple[torch.Tensor, torch.Tensor, int, bool]:
-    evaluations = 0
-    last_improve = torch.zeros_like(fitnesses)
-
-    while True:
-        new_solutions = model.vary(solutions)
-        evaluations = assess_changes(solutions, fitnesses, new_solutions, problem, change_tolerance,
-                                     last_improve, evaluations)
-        if torch.any(fitnesses == problem.max_fitness): 
-            return (solutions, fitnesses, evaluations, True)
-        if torch.all(last_improve > change_tolerance):
-            return (solutions, fitnesses, evaluations, False)   
+    return evaluations  
         
                    
 def hillclimb(solutions : torch.Tensor, fitnesses : torch.Tensor,
@@ -64,20 +47,3 @@ def hillclimb(solutions : torch.Tensor, fitnesses : torch.Tensor,
             return (solutions, fitnesses, evaluations, True)
         if torch.all(last_improve > change_tolerance):
             return (solutions, fitnesses, evaluations, False)   
-        
-
-def learn_from_population(model : DOBase, solutions : torch.Tensor,
-                          optimizer : torch.optim.Optimizer, batch_size : int,
-                          beta : float=0, l1_reg : int=0, model_type : str="AE") -> None:
-    if model_type == "VAE":
-        learn = lambda s : model.learn_from_sample(s, optimizer, beta)
-    elif model_type == "AE":
-        learn = lambda s : model.learn_from_sample(s, optimizer, l1_reg)
-
-    epochs = 400
-    for epoch in range(epochs):
-        dataset = DataLoader(PopulationDataset(solutions), batch_size=batch_size, shuffle=True)
-        for i,x in enumerate(dataset):
-            loss = learn(x["solution"])
-            # print("Epoch {}/{} - {}/{} - Loss = {}".format(epoch+1,epochs,i,len(population),loss))
-    # show_mu_sd(model, x["solution"])
