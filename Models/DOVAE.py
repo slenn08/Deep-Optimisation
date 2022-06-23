@@ -33,7 +33,7 @@ class DOVAE(DOBase):
     def decode(self, z: torch.Tensor) -> torch.Tensor:
         return self.decoder(z)
     
-    def vary(self, x: torch.Tensor, layer : int, encode : bool) -> torch.Tensor:
+    def vary(self, x: torch.Tensor, layer : int) -> torch.Tensor:
         hidden_repr, logvar = self.encode(x, layer)
         new_hidden_repr = hidden_repr.clone().detach()
         std = torch.exp(0.5 * logvar)

@@ -12,12 +12,12 @@ class OptimHandler(ABC):
         self.problem = problem
     
     @abstractmethod
-    def learn_from_population(solutions : torch.Tensor,
+    def learn_from_population(self, solutions : torch.Tensor,
                               optimizer : torch.optim.Optimizer, batch_size : int,
                               *args, **kwargs) -> None:
         pass
 
     @abstractmethod
-    def optimise_solutions(solutions : torch.Tensor, fitnesses : torch.Tensor,
+    def optimise_solutions(self, solutions : torch.Tensor, fitnesses : torch.Tensor, change_tolerance : int,
                            *args, **kwargs) -> Tuple[torch.Tensor, torch.Tensor, int, bool]:
         pass
