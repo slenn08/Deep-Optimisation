@@ -2,8 +2,8 @@ import torch
 from torch.utils.data import DataLoader
 
 from typing import Tuple
-from .COProblems.OptimizationProblem import OptimizationProblem
-from .Data.Functions import to_int_list
+from COProblems.OptimizationProblem import OptimizationProblem
+from Data.Functions import to_int_list
 
 # Incomplete, need to make it general for hillclimb and MIV
 def assess_changes(solutions : torch.Tensor, fitnesses : torch.Tensor,
@@ -14,7 +14,6 @@ def assess_changes(solutions : torch.Tensor, fitnesses : torch.Tensor,
         if torch.equal(solution, new_solution) or last_improve[i] > change_tolerance:
             last_improve[i] += 1
             continue
-        #new_solution = problem.repair(new_solution)
         new_fitness = problem.fitness(to_int_list(new_solution))
         evaluations += 1
 
@@ -41,9 +40,9 @@ def hillclimb(solutions : torch.Tensor, fitnesses : torch.Tensor,
         new_activations = torch.randint(0,2,i.shape,dtype=torch.float32) * 2 - 1
         new_solutions[torch.arange(new_solutions.shape[0]),i] = new_activations
 
-        evaluations = assess_changes(solutions, fitnesses, new_solutions, problem, change_tolerance,
-                                     last_improve, evaluations)
+        _ = assess_changes(solutions, fitnesses, new_solutions, problem, change_tolerance,
+                                     last_improve, 0)
         if torch.any(fitnesses == problem.max_fitness): 
-            return (solutions, fitnesses, evaluations, True)
+            return (solutions, fitnesses, 0, True)
         if torch.all(last_improve > change_tolerance):
-            return (solutions, fitnesses, evaluations, False)   
+            return (solutions, fitnesses, 0, False)   

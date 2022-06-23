@@ -2,11 +2,11 @@ import torch
 from torch.utils.data import DataLoader
 from typing import Tuple
 
-from .Optimise import assess_changes
-from .COProblems.OptimizationProblem import OptimizationProblem
-from .Models.DOVAE import DOVAE
-from .OptimHandler import OptimHandler
-from .Data import PopulationDataset
+from Optimise import assess_changes
+from COProblems.OptimizationProblem import OptimizationProblem
+from Models.DOVAE import DOVAE
+from OptimHandler import OptimHandler
+from Data import PopulationDataset
 
 class OptimVAEHandler(OptimHandler):
     def __init__(self, model: DOVAE, problem: OptimizationProblem):

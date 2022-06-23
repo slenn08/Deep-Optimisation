@@ -3,8 +3,8 @@ import torch
 
 from abc import abstractmethod, ABC
 
-from .COProblems.OptimizationProblem import OptimizationProblem
-from .Models.DOBase import DOBase
+from COProblems.OptimizationProblem import OptimizationProblem
+from Models.DOBase import DOBase
 
 class OptimHandler(ABC):
     def __init__(self, model : DOBase, problem : OptimizationProblem):

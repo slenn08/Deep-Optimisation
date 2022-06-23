@@ -36,7 +36,7 @@ class DO(DOBase):
 
         dh = hs - h
         a = torch.mean(torch.abs(dh), dim=1)
-        z = torch.max(torch.abs(dh), dim=1)
+        z, _ = torch.max(torch.abs(dh), dim=1)
         t = a + (z - a) * torch.rand(a.shape)
 
         # transposes are needed to ensure gt is carried out across rows
@@ -63,6 +63,7 @@ class DO(DOBase):
         delta_s = new_reconstruction - old_reconstruction
 
         new_solution = x + delta_s
+        new_solution = torch.sign(new_solution)
         return new_solution
     
     def transition(self, hidden_size : int) -> None:
@@ -87,7 +88,7 @@ class DO(DOBase):
     def loss(self, x : torch.Tensor, recon : torch.Tensor,
              l1_coef : float) -> dict:
         mse = F.mse_loss(x, recon)
-        l1_loss = sum(p.abs().sum() for p in self.float.parameters())
+        l1_loss = sum(p.abs().sum() for p in self.parameters())
         loss = mse + l1_coef * l1_loss
         return {"loss" : loss, "recon" : mse, "l1" : l1_loss}
     
