@@ -40,16 +40,11 @@ class DOVAE(DOBase):
         # Stepping with 5% of the variables in the latent space
         changed_indices = max(round(0.05 * hidden_repr.shape[1]), 1)
 
-        # hillclimb
-        if layer == 0:
-            i = torch.randint(0,hidden_repr.shape[1], (hidden_repr.shape[0],))
-            new_hidden_repr[torch.arange(hidden_repr.shape[0]),i] *= -1
-        else:
-            i = torch.randint(0,hidden_repr.shape[1], (changed_indices,hidden_repr.shape[0]))
-            # Provides values of either 1 or -1
-            directions = torch.randint(0,2,i.shape,dtype=torch.float32) * 2 - 1
-            steps = std[torch.arange(hidden_repr.shape[0]),i] * 5 * directions
-            new_hidden_repr[torch.arange(hidden_repr.shape[0]),i] += steps
+        i = torch.randint(0,hidden_repr.shape[1], (changed_indices,hidden_repr.shape[0]))
+        # Provides values of either 1 or -1
+        directions = torch.randint(0,2,i.shape,dtype=torch.float32) * 2 - 1
+        steps = std[torch.arange(hidden_repr.shape[0]),i] * 5 * directions
+        new_hidden_repr[torch.arange(hidden_repr.shape[0]),i] += steps
 
         old_reconstruction = torch.sign(self.decode(hidden_repr, layer))
         new_reconstruction = torch.sign(self.decode(new_hidden_repr, layer))

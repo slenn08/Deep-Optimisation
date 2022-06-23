@@ -48,8 +48,8 @@ class DO(DOBase):
         hidden_repr = self.encode(x, layer)
         new_hidden_repr = hidden_repr.clone().detach()
 
-        # hillclimb or use standard assign method
-        if not encode or layer == 0:
+        # use standard assign method
+        if not encode:
             i = torch.randint(0,hidden_repr.shape[1], (hidden_repr.shape[0],))
             # Provides values of either 1 or -1
             new_activations = torch.randint(0,2,i.shape,dtype=torch.float32) * 2 - 1
