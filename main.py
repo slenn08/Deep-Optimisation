@@ -10,20 +10,20 @@ from OptimVAE import OptimVAEHandler
 from Data.PopulationDataset import PopulationDataset
 from Data.Functions import generate_population
 
-change_tolerance = 256
+change_tolerance = 128
 
-problem_size = 64
-compression = "ov"
-environment = "gc"
-pop_size = 64
+problem_size = 128
+compression = "npov"
+environment = "hgc"
+pop_size = 256
 problem = ECProblem(problem_size,compression,environment)
 
-dropout_prob = 0.8
-l1_coef = 0.0005
-l2_coef = 0.0005
-lr = 0.001
+dropout_prob = 0.2
+l1_coef = 0.0001
+l2_coef = 0.00005
+lr = 0.002
 batch_size = 16
-compression_ratio = 0.8
+compression_ratio = 0.9
 model = DO(problem_size, dropout_prob)
 hidden_sizes = [int(problem_size*(compression_ratio**i)) for i in range(1,20)]
 

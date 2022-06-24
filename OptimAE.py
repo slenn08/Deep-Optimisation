@@ -25,6 +25,7 @@ class OptimAEHandler(OptimHandler):
 
     def optimise_solutions(self, solutions: torch.Tensor, fitnesses: torch.Tensor,
                            change_tolerance : int) -> Tuple[torch.Tensor, torch.Tensor, int, bool]:
+        self.model.eval()
         evaluations = 0
         for layer in range(self.model.num_layers-1, 0, -1):
             print("Optimising from layer {}".format(layer))
