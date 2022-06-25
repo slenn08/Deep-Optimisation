@@ -33,8 +33,8 @@ class DOVAE(DOBase):
     def decode(self, z: torch.Tensor) -> torch.Tensor:
         return self.decoder(z)
     
-    def vary(self, x: torch.Tensor, layer : int) -> torch.Tensor:
-        hidden_repr, logvar = self.encode(x, layer)
+    def vary(self, x: torch.Tensor) -> torch.Tensor:
+        hidden_repr, logvar = self.encode(x)
         new_hidden_repr = hidden_repr.clone().detach()
         std = torch.exp(0.5 * logvar)
         # Stepping with 5% of the variables in the latent space
@@ -46,8 +46,8 @@ class DOVAE(DOBase):
         steps = std[torch.arange(hidden_repr.shape[0]),i] * 5 * directions
         new_hidden_repr[torch.arange(hidden_repr.shape[0]),i] += steps
 
-        old_reconstruction = torch.sign(self.decode(hidden_repr, layer))
-        new_reconstruction = torch.sign(self.decode(new_hidden_repr, layer))
+        old_reconstruction = torch.sign(self.decode(hidden_repr))
+        new_reconstruction = torch.sign(self.decode(new_hidden_repr))
         delta_s = new_reconstruction - old_reconstruction
 
         new_solution = x + delta_s
@@ -55,7 +55,7 @@ class DOVAE(DOBase):
     
     def transition(self) -> None:
         self.mean_layer = weight_norm(nn.Linear(self.input_size, self.hidden_size), name='weight')
-        self.std_layer = weight_norm(nn.Linear(self.input_size, self.hidden_size), name='weight')      
+        self.logvar_layer = weight_norm(nn.Linear(self.input_size, self.hidden_size), name='weight')      
         decoder_layer = weight_norm(nn.Linear(self.hidden_size, self.input_size), name='weight')
         self.decoder = nn.Sequential(decoder_layer,nn.Tanh())
     
