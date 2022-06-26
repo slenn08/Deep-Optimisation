@@ -6,6 +6,7 @@ from COProblems.OptimizationProblem import OptimizationProblem
 from Data.Functions import to_int_list
 
 # Incomplete, need to make it general for hillclimb and MIV
+@torch.no_grad()
 def assess_changes(solutions : torch.Tensor, fitnesses : torch.Tensor,
                    new_solutions : torch.Tensor, problem : OptimizationProblem, 
                    change_tolerance : int, last_improve : torch.Tensor, 
@@ -28,8 +29,8 @@ def assess_changes(solutions : torch.Tensor, fitnesses : torch.Tensor,
             last_improve[i] += 1
 
     return evaluations  
-        
-                   
+       
+@torch.no_grad()
 def hillclimb(solutions : torch.Tensor, fitnesses : torch.Tensor,
               change_tolerance : int, problem : torch.Tensor) -> Tuple[torch.Tensor, torch.Tensor, int, bool]:
     last_improve = torch.zeros_like(fitnesses)

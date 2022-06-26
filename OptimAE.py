@@ -23,6 +23,7 @@ class OptimAEHandler(OptimHandler):
                 # ))
         # show_mu_sd(model, x["solution"])
 
+    @torch.no_grad()
     def optimise_solutions(self, solutions: torch.Tensor, fitnesses: torch.Tensor,
                            change_tolerance : int) -> Tuple[torch.Tensor, torch.Tensor, int, bool]:
         self.model.eval()

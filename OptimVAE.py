@@ -20,7 +20,8 @@ class OptimVAEHandler(OptimHandler):
                 loss = self.model.learn_from_sample(x["solution"], optimizer, beta)
                 # print("Epoch {}/{} - {}/{} - Loss = {}".format(epoch+1,epochs,i,len(population),loss))
         # show_mu_sd(model, x["solution"])
-
+    
+    @torch.no_grad()
     def optimise_solutions(self, solutions: torch.Tensor, fitnesses: torch.Tensor,
                            change_tolerance : int) -> Tuple[torch.Tensor, torch.Tensor, int, bool]:
         evaluations = 0

@@ -11,9 +11,9 @@ from Data.PopulationDataset import PopulationDataset
 from Data.Functions import generate_population
 
 change_tolerance = 256
-problem_size = 256
-compression = "npov"
-environment = "gc"
+problem_size = 128
+compression = "ov"
+environment = "rs"
 pop_size = 128
 problem = ECProblem(problem_size,compression,environment)
 
@@ -32,10 +32,9 @@ compression_ratio = 0.8
 model = DOVAE(problem_size, round(compression_ratio*problem_size))
 
 
-with torch.no_grad():
-    population, fitnesses = generate_population(problem, pop_size)
-    population, fitnesses, _, _ = hillclimb(population, fitnesses, change_tolerance, problem)
-    print(torch.max(fitnesses))
+population, fitnesses = generate_population(problem, pop_size)
+population, fitnesses, _, _ = hillclimb(population, fitnesses, change_tolerance, problem)
+print(torch.max(fitnesses))
 
 # ae_handler = OptimAEHandler(model, problem)
 vae_handler = OptimVAEHandler(model, problem)
@@ -61,11 +60,10 @@ while not done:
     model.transition()
     optimizer = torch.optim.Adam(model.parameters(), lr=lr)
     vae_handler.learn_from_population(population, optimizer, batch_size, 0.1)
-    with torch.no_grad():
-        population, fitnesses, evaluations, done = vae_handler.optimise_solutions(
-            population, fitnesses, change_tolerance
-        )
-        print(torch.max(fitnesses))
+    population, fitnesses, evaluations, done = vae_handler.optimise_solutions(
+        population, fitnesses, change_tolerance
+    )
+    print(torch.max(fitnesses))
     total_eval += evaluations
     print(total_eval)
 
