@@ -30,7 +30,7 @@ def assess_changes(solutions : torch.Tensor, fitnesses : torch.Tensor,
 
     return evaluations  
        
-@torch.no_grad()
+@torch.no_grad() 
 def hillclimb(solutions : torch.Tensor, fitnesses : torch.Tensor,
               change_tolerance : int, problem : torch.Tensor) -> Tuple[torch.Tensor, torch.Tensor, int, bool]:
     last_improve = torch.zeros_like(fitnesses)
@@ -38,8 +38,7 @@ def hillclimb(solutions : torch.Tensor, fitnesses : torch.Tensor,
         new_solutions = solutions.clone().detach()
         i = torch.randint(0,new_solutions.shape[1], (new_solutions.shape[0],))
         # Provides values of either 1 or -1
-        new_activations = torch.randint(0,2,i.shape,dtype=torch.float32) * 2 - 1
-        new_solutions[torch.arange(new_solutions.shape[0]),i] = new_activations
+        new_solutions[torch.arange(new_solutions.shape[0]),i] *= -1
 
         _ = assess_changes(solutions, fitnesses, new_solutions, problem, change_tolerance,
                                      last_improve, 0)
