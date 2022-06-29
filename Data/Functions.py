@@ -16,4 +16,9 @@ def generate_population(problem, pop_size) -> Tuple[torch.Tensor, torch.Tensor]:
     population = torch.tensor(population, dtype=torch.float32)
     fitnesses = torch.tensor(fitnesses, dtype=torch.float32)
     return population, fitnesses
-        
+
+def print_statistics(fitnesses : torch.tensor):
+    mean_f = torch.mean(fitnesses).item()  
+    max_f = torch.max(fitnesses).item()
+
+    print("Max : {}, Mean : {}".format(max_f, mean_f))     
