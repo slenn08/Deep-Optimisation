@@ -37,7 +37,7 @@ for c, e, problem_size in itertools.product(["nov","ov","ndov","npov"],["gc","hg
 
     population.sort(key=lambda x:x[1], reverse=True)
     with torch.no_grad():
-        for solution, fitness in [population[-1]]:
+        for solution, fitness in [population[pop_size//2]]:
             hidden_repr, logvar = model.encode(torch.tensor(solution, dtype=torch.float32))
             std = torch.exp(0.5*logvar)
 
@@ -95,7 +95,7 @@ for c, e, problem_size in itertools.product(["nov","ov","ndov","npov"],["gc","hg
             # plt.imshow(fitness_changes, cmap='hot', interpolation='none', extent=[-20,20,0,len(hidden_repr)])
             # plt.colorbar()
             # plt.show()
-            path = "Graphs\\MutantSpectraVAELast\\{}\\{}".format(c.upper(),e.upper())
+            path = "Graphs\\MutantSpectraVAEMid\\{}\\{}".format(c.upper(),e.upper())
             if not os.path.exists(path):
                 os.makedirs(path)
             plt.savefig(path+"\\{}.png".format(problem_size), bbox_inches='tight', dpi=300)

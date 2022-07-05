@@ -5,7 +5,7 @@ from Models.DOVAE2 import hillclimb_optimize
 pop_size = 256
 data = {}
 linkages = {}
-with open("data.txt", mode="w") as file:
+with open("data2.txt", mode="w") as file:
     for c in ["nov", "ov", "ndov", "npov"]:
         for e in ["gc", "hgc", "rs"]:
             for problem_size in [16,32,64,128,256]:    

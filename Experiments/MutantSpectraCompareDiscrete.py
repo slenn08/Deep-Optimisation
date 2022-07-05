@@ -40,8 +40,6 @@ kl_weight = 0.1
 batch_size = 16
 
 for c, e, problem_size in problems:
-    if e != "hgc":
-        continue
     print(c,e,problem_size)
     latent_size = int(compression*problem_size)
     problem_string = "{}_{}_{}".format(c,e,problem_size)

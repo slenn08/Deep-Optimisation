@@ -11,12 +11,16 @@ from OptimVAE import OptimVAEHandler
 from Data.Functions import generate_population, to_int_list, print_statistics
 from data import data, linkages
 
-change_tolerance = 256
+change_tolerance = 64
 problem_size = 256
-compression = "nov"
+compression = "npov"
 environment = "hgc"
 pop_size = 128
-problem = ECProblem(problem_size,compression,environment)
+problem_string = "{}_{}_{}".format(compression,environment,problem_size)
+linkage = None
+if environment == "hgc":
+    linkage = linkages[problem_string]
+problem = ECProblem(problem_size,compression,environment,linkages=linkage)
 
 lr = 0.001
 batch_size = 16
@@ -28,7 +32,7 @@ vae_handler = OptimVAEHandler(model, problem)
 # population, fitnesses, _, _ = hillclimb(population, fitnesses, change_tolerance, problem)
 # print_statistics(fitnesses)
 
-population = data["nov_hgc_256"][:pop_size]
+population = data[problem_string][:pop_size]
 fitnesses = torch.tensor(list(map(lambda x : x[1], population)), dtype=torch.float32)
 population = torch.tensor(list(map(lambda x : x[0], population)), dtype=torch.float32)
 print_statistics(fitnesses)
@@ -37,58 +41,42 @@ model.transition()
 optimizer = torch.optim.Adam(model.parameters(), lr=lr)
 vae_handler.learn_from_population(population, optimizer, batch_size, 0.1)
 
+print(population.shape)
+print(torch.unique(population, dim=0).shape)
+print(torch.unique(torch.sign(model(population)[0]), dim=0).shape)
+
+
 with torch.no_grad():
-    i = torch.argmin(fitnesses)
-    s = population[0]
-    print(fitnesses[i])
-    # s = population[0]
-    # print(fitnesses[0])
-    hidden_repr, logvar = model.encode(s)
-    std = torch.exp(0.5 * logvar)
+    # Sort population and fitnesses by fitness ascending
+    fitnesses, i = torch.sort(fitnesses)
+    population = population[i]
+    fitness_changes = []
+    
+    used_indices = 32
+    i = torch.arange(0,pop_size)
+    #i = torch.randint(0, population.shape[0], (used_indices,))
+    population_hm = population.numpy()[i]
+    new_population = torch.sign(model(population)[0])
+    new_population_hm = new_population.numpy()[i]
+    changes_hm = (new_population_hm - population_hm) / 2 
+    self_h_distance = np.abs(changes_hm).sum(axis=1)
 
-    old_reconstruction = torch.sign(model.decode(hidden_repr))
-
-    min_z = hidden_repr - 20*std
-    max_z = hidden_repr + 20*std
-    n = 100
-    fitness_changes = np.zeros((hidden_repr.shape[0],n))
-    # For each variable
-    for i, (var_min, var_max) in enumerate(zip(min_z, max_z)):
-        new_hidden_repr = hidden_repr.clone()
-        # For each new value in the variable
-        for j,new_var in enumerate(np.linspace(var_min, var_max, n)):
-            new_hidden_repr[i] = new_var
-            new_reconstruction = torch.sign(model.decode(new_hidden_repr))
-            delta_s = new_reconstruction - old_reconstruction
-            new_solution = s + delta_s
-            new_solution = to_int_list(new_solution)
-            new_fitness = problem.fitness(new_solution)
-
-            d_fitness = new_fitness - fitnesses[0]
-            # negative_d_fitness = 1/n if d_fitness < 0 else 0
-            # zero_d_fitness = 1/n if d_fitness == 0 else 0
-            # positive_d_fitness = 1/n if d_fitness > 0 else 0
-
-            # negative_change += negative_d_fitness / len(min_z)
-            # no_change += zero_d_fitness / len(min_z)
-            # positive_change += positive_d_fitness / len(min_z)
-
-            # fitnesses.append(new_fitness - fitness)
-            # 1 if positive, 0 if no change, -1 if negative
-            # fitness_changes[i][j] = d_fitness/abs(d_fitness) if d_fitness != 0 else 0
-            fitness_changes[i][j] = d_fitness
-        
-        # fitnesses.append(variance[i].item())
-        # print(fitnesses)
-    fig, ax1 = plt.subplots(nrows=1, figsize=(4,4))
-    img1 = ax1.imshow(fitness_changes, cmap='hot', interpolation='none', extent=[-20,20,0,len(hidden_repr)])
-    divider = make_axes_locatable(ax1)
-    cax1 = divider.append_axes("right", size="5%", pad=0.05)
-    cbar = fig.colorbar(img1, cax=cax1)
-    cbar.ax.set_ylabel('Fitness Change', rotation=270, linespacing=2.0)
-    ax1.set_aspect('auto')
-    ax1.set_ylabel("Variable", fontdict={'fontsize': 12, 'fontweight': 'medium'})
-    ax1.set_xlabel("S.D Away From the Mean", fontdict={'fontsize': 12, 'fontweight': 'medium'})
+    for i, (s, f) in enumerate(zip(population[i], fitnesses[i])):
+        hidden_repr, logvar = model.encode(s)
+        new_solution = torch.sign(model.decode(hidden_repr))
+        new_solution = to_int_list(new_solution)
+        new_fitness = problem.fitness(new_solution)
+        d_fitness = new_fitness - f
+        fitness_changes.append(d_fitness)
+    
+    indices = [i for i in range(len(fitness_changes))]
+    #plt.plot(indices, fitness_changes)
+    fig, (ax1,ax2,ax3,ax4,ax5) = plt.subplots(ncols=5,figsize=(20,4))
+    img1 = ax1.imshow(population_hm, cmap='hot', interpolation='none')
+    img2 = ax2.imshow(new_population_hm, cmap='hot', interpolation='none')
+    img3 = ax3.imshow(changes_hm, cmap='hot', interpolation='none')
+    ax4.barh(indices, fitness_changes)
+    ax5.barh(indices, self_h_distance)
     plt.show()
 
 

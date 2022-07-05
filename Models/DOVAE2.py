@@ -97,7 +97,7 @@ def hillclimb_optimize(s, problem : OptimizationProblem):
             # Reset solution if negative fitness change
             solution[i] *= -1
         if len(ii) == 0:
-            return (solution,new_fitness)
+            return (solution,fitness)
 
 def encode_step(s, model : DeepOptimizer, v):
     s = s.clone()
