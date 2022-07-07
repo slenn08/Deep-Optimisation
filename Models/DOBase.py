@@ -12,7 +12,7 @@ class DOBase(nn.Module, ABC):
     varying solutions, and transitioning into a higher layer.
     """
 
-    def __init__(self):
+    def __init__(self, *args, **kwargs):
         super().__init__()
 
     @abstractmethod
