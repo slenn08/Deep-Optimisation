@@ -40,7 +40,7 @@ class OptimAEHandler(OptimHandler):
             batch_size: int
                 The batch size used during the learning process.
             l1_coef: int
-                The coefficient of the L1 term in the loss function
+                The coefficient of the L1 term in the loss function.
             epochs: int
                 The number of epochs to train for.
         """
