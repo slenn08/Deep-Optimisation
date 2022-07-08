@@ -1,10 +1,10 @@
-from typing import Tuple
 import torch
-
+from typing import Tuple
 from abc import abstractmethod, ABC
 
 from COProblems.OptimizationProblem import OptimizationProblem
 from Models.DOBase import DOBase
+from Data.Functions import to_int_list
 
 class OptimHandler(ABC):
     """
@@ -65,3 +65,92 @@ class OptimHandler(ABC):
             is a global optima.
         """
         pass
+
+    # Incomplete, need to make it general for hillclimb and MIV
+    @torch.no_grad()
+    def assess_changes(self, solutions : torch.Tensor, fitnesses : torch.Tensor,
+                       new_solutions : torch.Tensor, change_tolerance : int,
+                       last_improve : torch.Tensor, evaluations : int) -> int:
+        """
+        Determines which changes to solutions are positive and neutral and should be kept, and 
+        which changes are negative and should be discarded. Solutions and fitnesses are modified
+        in-place during this process.
+
+        Args:
+            solutions: torch.Tensor
+                The current solutions. Has shape N x W, where N is the number of solutions
+                in the population and W is the size of each solution.
+            fitnesses: torch.Tensor
+                The list of fitnesses relating to each solution. Has shape N, where the ith fitness
+                corresponds to the ith solution in the solutions tensor.
+            new_solutions: torch.Tensor
+                The new proposed solutions after Model-Informed Variation has been applied.
+            change_tolerance: int
+                Defines how many neutral or negative fitness changes can be made in a row before a 
+                solution is deemed an optima during the optimisation process.
+            last_improve: torch.Tensor
+                A list of numbers containing how many attempts have been made at making a change to 
+                each solution without encountering a positive solution. If the ith element is greater
+                than change_tolerance, no more changes shall be made to the ith solution. Has shape N.
+            evaluations: int
+                The total number of fitness evaluations that have been made to all the solutions.
+        
+        Returns:
+            The new number of evaluations that have been made (the previous evaluations + the number
+            of evaluations done during this function call).
+        """
+        for i, (solution, new_solution, fitness) in enumerate(zip(solutions, new_solutions, fitnesses)):
+            if torch.equal(solution, new_solution) or last_improve[i] > change_tolerance:
+                last_improve[i] += 1
+                continue
+            new_fitness = self.problem.fitness(to_int_list(new_solution))
+            evaluations += 1
+
+            if new_fitness >= fitness:
+                if new_fitness > fitness:
+                    last_improve[i] = 0 
+                else:
+                    last_improve[i] += 1
+                solutions[i] = new_solution
+                fitnesses[i] = new_fitness       
+            else:
+                last_improve[i] += 1
+
+        return evaluations  
+        
+    @torch.no_grad() 
+    def hillclimb(self, solutions : torch.Tensor, fitnesses : torch.Tensor,
+                  change_tolerance : int) -> Tuple[torch.Tensor, torch.Tensor, int, bool]:
+        """
+        Locally optimises solutions using a bit-substitution hill climber.
+
+        Args
+            solutions: torch.Tensor
+                The current solutions. Has shape N x W, where N is the number of solutions
+                in the population and W is the size of each solution.
+            fitnesses: torch.Tensor
+                The list of fitnesses relating to each solution. Has shape N, where the ith fitness
+                corresponds to the ith solution in the solutions tensor.
+            change_tolerance: int
+                Defines how many neutral or negative fitness changes can be made in a row before a 
+                solution is deemed an optima during the optimisation process.
+            
+        Returns:
+            A list containing the optimised solutions, their respective fitnesses, the number of
+            evaluations used during the process, and a boolean that is true if one of the solutions
+            is a global optima.
+        """
+        last_improve = torch.zeros_like(fitnesses)
+        while True:
+            new_solutions = solutions.clone().detach()
+            # Select which bits to flip
+            i = torch.randint(0,new_solutions.shape[1], (new_solutions.shape[0],))
+            # Flips the selected bits
+            new_solutions[torch.arange(new_solutions.shape[0]),i] *= -1
+
+            _ = self.assess_changes(solutions, fitnesses, new_solutions, change_tolerance,
+                                    last_improve, 0)
+            if torch.any(fitnesses == self.problem.max_fitness): 
+                return (solutions, fitnesses, 0, True)
+            if torch.all(last_improve > change_tolerance):
+                return (solutions, fitnesses, 0, False)

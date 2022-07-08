@@ -2,7 +2,6 @@ import torch
 from torch.utils.data import DataLoader
 from typing import Tuple
 
-from Optimise import assess_changes
 from COProblems.OptimizationProblem import OptimizationProblem
 from Models.DO import DO
 from OptimHandler import OptimHandler
@@ -84,8 +83,8 @@ class OptimAEHandler(OptimHandler):
 
             while True:
                 new_solutions = self.model.vary(solutions, layer, False)
-                evaluations = assess_changes(solutions, fitnesses, new_solutions, self.problem, change_tolerance,
-                                            last_improve, evaluations)
+                evaluations = self.assess_changes(solutions, fitnesses, new_solutions,
+                                                  change_tolerance, last_improve, evaluations)
                 if torch.any(fitnesses == self.problem.max_fitness): 
                     return (solutions, fitnesses, evaluations, True)
                 if torch.all(last_improve > change_tolerance):
