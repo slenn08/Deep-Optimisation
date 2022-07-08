@@ -1,8 +1,7 @@
 import torch
 
-from Optimise import hillclimb
 from COProblems.OptimizationProblem import ECProblem, OptimizationProblem
-from Models.DO import DO
+from Models.DOAE import DOAE
 from Models.DOVAE import DOVAE
 from OptimHandler import OptimHandler
 from OptimAE import OptimAEHandler
@@ -23,7 +22,7 @@ problem = ECProblem(problem_size,compression,environment)
 # lr = 0.002
 # batch_size = 16
 # compression_ratio = 0.9
-# model = DO(problem_size, dropout_prob)
+# model = DOAE(problem_size, dropout_prob)
 # hidden_sizes = [int(problem_size*(compression_ratio**i)) for i in range(1,20)]
 
 lr = 0.002
@@ -31,13 +30,15 @@ batch_size = 16
 compression_ratio = 0.8
 model = DOVAE(problem_size, round(compression_ratio*problem_size))
 
-
-population, fitnesses = generate_population(problem, pop_size)
-population, fitnesses, _, _ = hillclimb(population, fitnesses, change_tolerance, problem)
-print(torch.max(fitnesses))
-
 # ae_handler = OptimAEHandler(model, problem)
 vae_handler = OptimVAEHandler(model, problem)
+
+
+population, fitnesses = generate_population(problem, pop_size)
+population, fitnesses, _, _ = vae_handler.hillclimb(population, fitnesses, change_tolerance)
+print(torch.max(fitnesses))
+
+
 
 total_eval = 0
 # for hidden_size in hidden_sizes:

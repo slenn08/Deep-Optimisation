@@ -7,7 +7,7 @@ import random
 
 from DOBase import DOBase
 
-class DO(DOBase):
+class DOAE(DOBase):
     """
     Implements the AE model in DO as defined in "Deep Optimisation: Learning and
     Searching in Deep Representations of Combinatorial Optimisation Problems", Jamie
@@ -170,7 +170,7 @@ class DO(DOBase):
 
         weight = torch.zeros((hidden_size, prev_size))
         nn.init.uniform_(weight, -0.01, 0.01)
-        
+
         encoder_layer = nn.Linear(prev_size, hidden_size)
         encoder_layer.weight = nn.Parameter(weight)
         decoder_layer = nn.Linear(hidden_size, prev_size)

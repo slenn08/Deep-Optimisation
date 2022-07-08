@@ -3,7 +3,7 @@ from torch.utils.data import DataLoader
 from typing import Tuple
 
 from COProblems.OptimizationProblem import OptimizationProblem
-from Models.DO import DO
+from Models.DOAE import DOAE
 from OptimHandler import OptimHandler
 from Data.PopulationDataset import PopulationDataset
 
@@ -13,7 +13,7 @@ class OptimAEHandler(OptimHandler):
     "Deep Optimisation: Learning and Searching in Deep Representations of Combinatorial
     Optimisation Problems", Jamie Caldwell.
     """
-    def __init__(self, model: DO, problem: OptimizationProblem):
+    def __init__(self, model: DOAE, problem: OptimizationProblem):
         """
         Constructor method for OptimAEHandler.
 
