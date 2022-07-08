@@ -4,7 +4,6 @@ import matplotlib.pyplot as plt
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 import sys
 sys.path.append(".")
-from Optimise import hillclimb
 from COProblems.OptimizationProblem import ECProblem
 from Models.DOVAE import DOVAE
 from OptimVAE import OptimVAEHandler
@@ -29,7 +28,7 @@ model = DOVAE(problem_size, round(compression_ratio*problem_size))
 vae_handler = OptimVAEHandler(model, problem)
 
 # population, fitnesses = generate_population(problem, pop_size)
-# population, fitnesses, _, _ = hillclimb(population, fitnesses, change_tolerance, problem)
+# population, fitnesses, _, _ = vae_handler.hillclimb(population, fitnesses, change_tolerance, problem)
 # print_statistics(fitnesses)
 
 population = data[problem_string][:pop_size]
