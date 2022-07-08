@@ -168,8 +168,9 @@ class DO(DOBase):
         else: 
             prev_size = self.decoder[0].in_features
 
-        weight = torch.tensor([[random.uniform(-0.01,0.01) for _ in range(prev_size)]
-                                         for _ in range(hidden_size)], requires_grad=True)
+        weight = torch.zeros((hidden_size, prev_size))
+        nn.init.uniform_(weight, -0.01, 0.01)
+        
         encoder_layer = nn.Linear(prev_size, hidden_size)
         encoder_layer.weight = nn.Parameter(weight)
         decoder_layer = nn.Linear(hidden_size, prev_size)
