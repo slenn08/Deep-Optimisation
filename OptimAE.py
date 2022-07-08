@@ -54,7 +54,7 @@ class OptimAEHandler(OptimHandler):
 
     @torch.no_grad()
     def optimise_solutions(self, solutions: torch.Tensor, fitnesses: torch.Tensor,
-                           change_tolerance : int) -> Tuple[torch.Tensor, torch.Tensor, int, bool]:
+                           change_tolerance : int, encode=False) -> Tuple[torch.Tensor, torch.Tensor, int, bool]:
         """
         Optimises the solutions using Model-Informed Variation. 
 
@@ -68,6 +68,9 @@ class OptimAEHandler(OptimHandler):
             change_tolerance: int
                 Defines how many neutral or negative fitness changes can be made in a row before a 
                 solution is deemed an optima during the optimisation process.
+            encode: bool
+                If true, the Encode method of varying will be used, and the Assign method otherwise.
+                Default False.
         
         Returns:
             A list containing the optimised solutions, their respective fitnesses, the number of
@@ -82,7 +85,7 @@ class OptimAEHandler(OptimHandler):
             last_improve = torch.zeros_like(fitnesses)
 
             while True:
-                new_solutions = self.model.vary(solutions, layer, False)
+                new_solutions = self.model.vary(solutions, layer, encode)
                 evaluations = self.assess_changes(solutions, fitnesses, new_solutions,
                                                   change_tolerance, last_improve, evaluations)
                 if torch.any(fitnesses == self.problem.max_fitness): 
