@@ -85,8 +85,8 @@ class OptimAEHandler(OptimHandler):
 
             while True:
                 new_solutions = self.model.vary(solutions, layer, encode)
-                evaluations = self.assess_changes(solutions, fitnesses, new_solutions,
-                                                  change_tolerance, last_improve, evaluations)
+                evaluations += self.assess_changes(solutions, fitnesses, new_solutions,
+                                                  change_tolerance, last_improve)
                 if torch.any(fitnesses == self.problem.max_fitness): 
                     return (solutions, fitnesses, evaluations, True)
                 if torch.all(last_improve > change_tolerance):

@@ -70,7 +70,7 @@ class OptimHandler(ABC):
     @torch.no_grad()
     def assess_changes(self, solutions: torch.Tensor, fitnesses: torch.Tensor,
                        new_solutions: torch.Tensor, change_tolerance: int,
-                       last_improve: torch.Tensor, evaluations: int) -> int:
+                       last_improve: torch.Tensor) -> int:
         """
         Determines which changes to solutions are positive and neutral and should be kept, and 
         which changes are negative and should be discarded. Solutions and fitnesses are modified
@@ -92,13 +92,11 @@ class OptimHandler(ABC):
                 A list of numbers containing how many attempts have been made at making a change to 
                 each solution without encountering a positive solution. If the ith element is greater
                 than change_tolerance, no more changes shall be made to the ith solution. Has shape N.
-            evaluations: int
-                The total number of fitness evaluations that have been made to all the solutions.
         
         Returns:
-            The new number of evaluations that have been made (the previous evaluations + the number
-            of evaluations done during this function call).
+            The new number of evaluations that have been made during this function call.
         """
+        evaluations = 0
         for i, (solution, new_solution, fitness) in enumerate(zip(solutions, new_solutions, fitnesses)):
             if torch.equal(solution, new_solution) or last_improve[i] > change_tolerance:
                 last_improve[i] += 1
