@@ -4,14 +4,14 @@ from torch import nn
 from torch.nn.utils import weight_norm
 import torch.nn.functional as F
 
-from .DOBase import DOBase
+from DOBase import DOBase
 
 class DOVAE(DOBase):
     """
     Implements a VAE model for DO. So far, only a single-layered VAE has been used,
     which is implemented here.
     """
-    def __init__(self, input_size : int, hidden_size : int):
+    def __init__(self, input_size: int, hidden_size: int):
         """
         Constructor method for the VAE. All layers of the model start of as empty, and
         will be set and reset during the transition method.
@@ -46,7 +46,7 @@ class DOVAE(DOBase):
             return x, None
         return [self.mean_layer(x), self.logvar_layer(x)]
     
-    def reparameterize(self, mu : torch.Tensor, logvar : torch.Tensor) -> torch.Tensor:
+    def reparameterize(self, mu: torch.Tensor, logvar: torch.Tensor) -> torch.Tensor:
         """
         Samples a latent distribution in such a way that gradients can flow through the 
         entirety of the network, as detailed in "Auto-Encoding Variational Bayes", 
@@ -141,8 +141,8 @@ class DOVAE(DOBase):
         decoder_layer = weight_norm(nn.Linear(self.hidden_size, self.input_size), name='weight')
         self.decoder = nn.Sequential(decoder_layer,nn.Tanh())
     
-    def loss(self, x: torch.Tensor, recon : torch.Tensor,
-             mu : torch.Tensor, logvar : torch.Tensor, beta : float) -> dict:
+    def loss(self, x: torch.Tensor, recon: torch.Tensor,
+             mu: torch.Tensor, logvar: torch.Tensor, beta: float) -> dict:
         """
         Calculates the loss function. This is done by adding the MSE of the input and the 
         KL Divergence between the latent distribution and unit normal distribution. 
@@ -174,8 +174,8 @@ class DOVAE(DOBase):
         loss = recon_MSE + beta * KLD
         return {"loss" : loss, "recon" : recon_MSE, "kld" : KLD}
     
-    def learn_from_sample(self, xs : torch.Tensor, optimizer : torch.optim.Optimizer,
-                          beta : float) -> dict:
+    def learn_from_sample(self, x: torch.Tensor, optimizer: torch.optim.Optimizer,
+                          beta: float) -> dict:
         """
         Handles learning from a sample of solutions.
 
@@ -191,8 +191,8 @@ class DOVAE(DOBase):
             The loss dictionary containing the total loss, reconstruction error and KL Divergence. 
         """
         self.train()
-        output, mu, logvar, z = self.forward(xs)
-        loss_dict = self.loss(xs, output, mu, logvar, beta)
+        output, mu, logvar, z = self.forward(x)
+        loss_dict = self.loss(x, output, mu, logvar, beta)
         loss = loss_dict["loss"]
 
         optimizer.zero_grad()

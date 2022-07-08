@@ -1,11 +1,10 @@
 import torch
-from torch.utils.data import DataLoader
+from torch.utils.data import DataLoader, TensorDataset
 from typing import Tuple
 
 from COProblems.OptimizationProblem import OptimizationProblem
 from Models.DOAE import DOAE
 from OptimHandler import OptimHandler
-from Data.PopulationDataset import PopulationDataset
 
 class OptimAEHandler(OptimHandler):
     """
@@ -44,9 +43,9 @@ class OptimAEHandler(OptimHandler):
                 The number of epochs to train for.
         """
         for epoch in range(epochs):
-            dataset = DataLoader(PopulationDataset(solutions), batch_size=batch_size, shuffle=True)
+            dataset = DataLoader(TensorDataset(solutions), batch_size=batch_size, shuffle=True)
             for i,x in enumerate(dataset):
-                loss = self.model.learn_from_sample(x["solution"], optimizer, l1_coef)
+                loss = self.model.learn_from_sample(x[0], optimizer, l1_coef)
                 # print("Epoch {}/{} - {}/{} - Loss = {}".format(
                 #     epoch+1,epochs,(i+1)*batch_size,len(solutions),loss["recon"]
                 # ))

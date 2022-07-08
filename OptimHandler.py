@@ -25,8 +25,8 @@ class OptimHandler(ABC):
         self.problem = problem
     
     @abstractmethod
-    def learn_from_population(self, solutions : torch.Tensor,
-                              optimizer : torch.optim.Optimizer, batch_size : int,
+    def learn_from_population(self, solutions: torch.Tensor,
+                              optimizer: torch.optim.Optimizer, batch_size: int,
                               *args, **kwargs) -> None:
         """
         Method to make the model learn from the population of solutions.
@@ -43,7 +43,7 @@ class OptimHandler(ABC):
         pass
 
     @abstractmethod
-    def optimise_solutions(self, solutions : torch.Tensor, fitnesses : torch.Tensor, change_tolerance : int,
+    def optimise_solutions(self, solutions: torch.Tensor, fitnesses: torch.Tensor, change_tolerance: int,
                            *args, **kwargs) -> Tuple[torch.Tensor, torch.Tensor, int, bool]:
         """
         Optimises the solutions using Model-Informed Variation. 
@@ -68,9 +68,9 @@ class OptimHandler(ABC):
 
     # Incomplete, need to make it general for hillclimb and MIV
     @torch.no_grad()
-    def assess_changes(self, solutions : torch.Tensor, fitnesses : torch.Tensor,
-                       new_solutions : torch.Tensor, change_tolerance : int,
-                       last_improve : torch.Tensor, evaluations : int) -> int:
+    def assess_changes(self, solutions: torch.Tensor, fitnesses: torch.Tensor,
+                       new_solutions: torch.Tensor, change_tolerance: int,
+                       last_improve: torch.Tensor, evaluations: int) -> int:
         """
         Determines which changes to solutions are positive and neutral and should be kept, and 
         which changes are negative and should be discarded. Solutions and fitnesses are modified
@@ -119,8 +119,8 @@ class OptimHandler(ABC):
         return evaluations  
         
     @torch.no_grad() 
-    def hillclimb(self, solutions : torch.Tensor, fitnesses : torch.Tensor,
-                  change_tolerance : int) -> Tuple[torch.Tensor, torch.Tensor, int, bool]:
+    def hillclimb(self, solutions: torch.Tensor, fitnesses: torch.Tensor,
+                  change_tolerance: int) -> Tuple[torch.Tensor, torch.Tensor, int, bool]:
         """
         Locally optimises solutions using a bit-substitution hill climber.
 

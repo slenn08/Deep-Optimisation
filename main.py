@@ -3,10 +3,8 @@ import torch
 from COProblems.OptimizationProblem import ECProblem, OptimizationProblem
 from Models.DOAE import DOAE
 from Models.DOVAE import DOVAE
-from OptimHandler import OptimHandler
 from OptimAE import OptimAEHandler
 from OptimVAE import OptimVAEHandler
-from Data.PopulationDataset import PopulationDataset
 from Data.Functions import generate_population
 
 change_tolerance = 256

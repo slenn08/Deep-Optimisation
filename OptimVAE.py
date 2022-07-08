@@ -1,5 +1,5 @@
 import torch
-from torch.utils.data import DataLoader
+from torch.utils.data import DataLoader, TensorDataset
 from typing import Tuple
 
 from COProblems.OptimizationProblem import OptimizationProblem
@@ -24,7 +24,7 @@ class OptimVAEHandler(OptimHandler):
         super().__init__(model, problem)
     
     def learn_from_population(self, solutions: torch.Tensor, optimizer: torch.optim.Optimizer,
-                              batch_size: int, beta : float, epochs : int=400) -> None:
+                              batch_size: int, beta: float, epochs: int=400) -> None:
         """
         Method to make the VAE learn from the population of solutions.
 
@@ -42,9 +42,9 @@ class OptimVAEHandler(OptimHandler):
                 The number of epochs to train for.
         """
         for epoch in range(epochs):
-            dataset = DataLoader(PopulationDataset(solutions), batch_size=batch_size, shuffle=True)
+            dataset = DataLoader(TensorDataset(solutions), batch_size=batch_size, shuffle=True)
             for i,x in enumerate(dataset):
-                loss = self.model.learn_from_sample(x["solution"], optimizer, beta)
+                loss = self.model.learn_from_sample(x[0], optimizer, beta)
                 # print("Epoch {}/{} - {}/{} - Loss = {}".format(epoch+1,epochs,i,len(population),loss))
         # show_mu_sd(model, x["solution"])
     
