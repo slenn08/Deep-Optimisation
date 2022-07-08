@@ -1,6 +1,6 @@
 import torch
 
-from COProblems.OptimizationProblem import ECProblem, OptimizationProblem
+from COProblems.OptimisationProblem import ECProblem, OptimisationProblem
 from Models.DOAE import DOAE
 from Models.DOVAE import DOVAE
 from OptimAE import OptimAEHandler

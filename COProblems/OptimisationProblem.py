@@ -1,32 +1,62 @@
 from random import choice
-from re import S
 import numpy as np
 import sys
-import torch
-
+from abc import ABC, abstractmethod
 import random
 sys.path.append(".")
 import COProblems.MKP_populate_function as mkp
 
-class OptimizationProblem():
-    def fitness(self, x) -> float:
-        return NotImplementedError
-    def is_valid(self, x) -> bool:
-        return NotImplementedError
-    def random_solution(self) -> "list[int]":
-        return NotImplementedError
-
-class TestProblem(OptimizationProblem):
+class OptimisationProblem(ABC):
+    """
+    Abstract class to represent an optimisation problem. Any problem to solve via DO should
+    subclass from it.
+    """
     def __init__(self):
-        self.bit_string = [choice([1,-1]) for _ in range(32)]
-    def fitness(self, x):
-        return sum(map(lambda a : a[0]*a[1], zip(x,self.bit_string)))
-    def is_valid(self, x):
-        return True
-    def random_solution(self):
-        return [choice([1,-1]) for _ in range(32)]
+        """
+        Constructor method for OptimisationProblem.
+        """
+        self.max_fitness = float('inf')
 
-class HTOP(OptimizationProblem):
+    @abstractmethod
+    def fitness(self, x: np.ndarray) -> float:
+        """
+        Calculates the fitness of a solution.
+
+        Args:
+            x: numpy.ndarray
+                The solution that will have its fitness calculated.
+        
+        Returns:
+            The fitness of the solution.
+        """
+        pass
+
+    @abstractmethod
+    def is_valid(self, x: np.ndarray) -> bool:
+        """
+        Determines whether a given solution violates any constraints on the problem.
+
+        Args:
+            x: numpy.ndarray
+                The solution which will be tested.
+
+        Returns:
+            True if the solution is valid and False if the solution violates any constraints.
+        """
+        pass
+
+    @abstractmethod
+    def random_solution(self) -> np.ndarray:
+        """
+        Generates a solution to the problem.
+
+        Returns:
+            The random solution.
+        """
+        pass
+
+
+class HTOP(OptimisationProblem):
     def __init__(self, size):
         self.size = size
     def fitness(self,x):
@@ -56,7 +86,7 @@ class HTOP(OptimizationProblem):
     def random_solution(self):
         return [choice([1,-1]) for _ in range(self.size)]
 
-class MCParity(OptimizationProblem):
+class MCParity(OptimisationProblem):
     def fitness(self, x):
         modules = [x[i:i + 4] for i in range(0, len(x), 4)]
         types = [[1,1,-1,1], [1,-1,-1,-1]]
@@ -78,7 +108,7 @@ class MCParity(OptimizationProblem):
     def random_solution(self):
         return [choice([1,-1]) for _ in range(128)]
 
-class ECProblem(OptimizationProblem):
+class ECProblem(OptimisationProblem):
     def __init__(self, size, compression, environment, linkages=None):
         self.max_fitness = 0
         self.size = size
@@ -265,7 +295,7 @@ def RS(s, compression, up):
         total += up[y][x]
     return total
 
-class MKP(OptimizationProblem):
+class MKP(OptimisationProblem):
     def __init__(self, file, id):
         # c = item values
         # A = dimensions x items

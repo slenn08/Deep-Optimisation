@@ -2,7 +2,7 @@ import torch
 from torch.utils.data import DataLoader, TensorDataset
 from typing import Tuple
 
-from COProblems.OptimizationProblem import OptimizationProblem
+from COProblems.OptimisationProblem import OptimisationProblem
 from Models.DOAE import DOAE
 from OptimHandler import OptimHandler
 
@@ -12,14 +12,14 @@ class OptimAEHandler(OptimHandler):
     "Deep Optimisation: Learning and Searching in Deep Representations of Combinatorial
     Optimisation Problems", Jamie Caldwell.
     """
-    def __init__(self, model: DOAE, problem: OptimizationProblem):
+    def __init__(self, model: DOAE, problem: OptimisationProblem):
         """
         Constructor method for OptimAEHandler.
 
         Args:
             model: DO
                 The central AE model used in Deep Optimisation.
-            problem: OptimizationProblem
+            problem: OptimisationProblem
                 The problem being solved.
         """
         super().__init__(model, problem)

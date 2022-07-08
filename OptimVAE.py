@@ -2,7 +2,7 @@ import torch
 from torch.utils.data import DataLoader, TensorDataset
 from typing import Tuple
 
-from COProblems.OptimizationProblem import OptimizationProblem
+from COProblems.OptimisationProblem import OptimisationProblem
 from Models.DOVAE import DOVAE
 from OptimHandler import OptimHandler
 
@@ -10,14 +10,14 @@ class OptimVAEHandler(OptimHandler):
     """
     Describes the algorithm for carrying out DO with a VAE model.
     """
-    def __init__(self, model: DOVAE, problem: OptimizationProblem):
+    def __init__(self, model: DOVAE, problem: OptimisationProblem):
         """
         Constructor method for OptimVAEHandler.
 
         Args:
             model: DO
                 The central VAE model used in Deep Optimisation.
-            problem: OptimizationProblem
+            problem: OptimisationProblem
                 The problem being solved.
         """
         super().__init__(model, problem)

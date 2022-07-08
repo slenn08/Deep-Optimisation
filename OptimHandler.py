@@ -2,24 +2,23 @@ import torch
 from typing import Tuple
 from abc import abstractmethod, ABC
 
-from COProblems.OptimizationProblem import OptimizationProblem
+from COProblems.OptimisationProblem import OptimisationProblem
 from Models.DOBase import DOBase
-from Data.Functions import to_int_list
 
 class OptimHandler(ABC):
     """
     Abstract class to handle the DO algorithm, given a model and a problem. Each handler
     is specific to the model as different model types may require slightly different algorithms.
     """
-    def __init__(self, model : DOBase, problem : OptimizationProblem):
+    def __init__(self, model : DOBase, problem : OptimisationProblem):
         """
         Constructor method for the OptimHandler class.
 
         Args:
             model: DOBase
                 The central model being used for DO.
-            problem: OptimizationProblem
-                The combinatorial optimization problem being solved.
+            problem: OptimisationProblem
+                The combinatorial optimisation problem being solved.
         """
         self.model = model
         self.problem = problem
@@ -94,14 +93,14 @@ class OptimHandler(ABC):
                 than change_tolerance, no more changes shall be made to the ith solution. Has shape N.
         
         Returns:
-            The new number of evaluations that have been made during this function call.
+            The number of evaluations that have been made during this function call.
         """
         evaluations = 0
         for i, (solution, new_solution, fitness) in enumerate(zip(solutions, new_solutions, fitnesses)):
             if torch.equal(solution, new_solution) or last_improve[i] > change_tolerance:
                 last_improve[i] += 1
                 continue
-            new_fitness = self.problem.fitness(to_int_list(new_solution))
+            new_fitness = self.problem.fitness(self.to_int_list(new_solution))
             evaluations += 1
 
             if new_fitness >= fitness:

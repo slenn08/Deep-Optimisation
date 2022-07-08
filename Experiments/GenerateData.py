@@ -1,6 +1,6 @@
 import sys
 sys.path.append(".")
-from COProblems.OptimizationProblem import ECProblem, generate_linkage
+from COProblems.OptimisationProblem import ECProblem, generate_linkage
 from Models.DOVAE2 import hillclimb_optimize
 pop_size = 256
 data = {}

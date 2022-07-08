@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 import sys
 sys.path.append(".")
-from COProblems.OptimizationProblem import ECProblem
+from COProblems.OptimisationProblem import ECProblem
 from Models.DOVAE import DOVAE
 from OptimVAE import OptimVAEHandler
 from Data.Functions import generate_population, to_int_list, print_statistics
