@@ -5,7 +5,6 @@ from Models.DOAE import DOAE
 from Models.DOVAE import DOVAE
 from OptimAE import OptimAEHandler
 from OptimVAE import OptimVAEHandler
-from Data.Functions import generate_population
 
 change_tolerance = 256
 problem_size = 128
@@ -32,7 +31,7 @@ model = DOVAE(problem_size, round(compression_ratio*problem_size))
 vae_handler = OptimVAEHandler(model, problem)
 
 
-population, fitnesses = generate_population(problem, pop_size)
+population, fitnesses = vae_handler.generate_population(problem, pop_size)
 population, fitnesses, _, _ = vae_handler.hillclimb(population, fitnesses, change_tolerance)
 print(torch.max(fitnesses))
 

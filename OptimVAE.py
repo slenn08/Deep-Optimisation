@@ -5,7 +5,6 @@ from typing import Tuple
 from COProblems.OptimizationProblem import OptimizationProblem
 from Models.DOVAE import DOVAE
 from OptimHandler import OptimHandler
-from Data.PopulationDataset import PopulationDataset
 
 class OptimVAEHandler(OptimHandler):
     """
