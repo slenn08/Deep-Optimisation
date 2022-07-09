@@ -1,10 +1,10 @@
 from random import choice
+from typing import List
 import numpy as np
 import sys
 from abc import ABC, abstractmethod
 import random
-sys.path.append(".")
-import COProblems.MKP_populate_function as mkp
+import MKP_populate_function as mkp
 
 class OptimisationProblem(ABC):
     """
@@ -56,71 +56,41 @@ class OptimisationProblem(ABC):
         pass
 
 
-class HTOP(OptimisationProblem):
-    def __init__(self, size):
-        self.size = size
-    def fitness(self,x):
-        fitness_val = 0
-        while len(x) > 2:
-            new_x = []
-            for i in range(0,len(x),4):
-                chunk = x[i:i+4]
-                new_chunk = self.t(chunk)
-                fitness_val += self.f(new_chunk)
-                new_x += new_chunk
-            x = new_x
-        return fitness_val
-    def f(self, x):
-        if None not in x:
-            return 1
-        else:
-            return 0
-    def t(self, x):
-        if x == [1,-1,-1,-1]: return [-1,-1]
-        if x == [-1,1,-1,-1]: return [-1,1]
-        if x == [-1,-1,1,-1]: return [1,-1]
-        if x == [-1,-1,-1,1]: return [1,1]
-        else: return [None, None]
-    def is_valid(self, x):
-        return True
-    def random_solution(self):
-        return [choice([1,-1]) for _ in range(self.size)]
-
-class MCParity(OptimisationProblem):
-    def fitness(self, x):
-        modules = [x[i:i + 4] for i in range(0, len(x), 4)]
-        types = [[1,1,-1,1], [1,-1,-1,-1]]
-        p = 0.0001
-        fitness = 0
-        for m in modules:
-            fitness += (abs(sum(m))==2)
-        for t in types:
-            total = 0
-            for m in modules:
-                if m == t:
-                    total += 1
-            fitness += p * (total ** 2)
-        
-        return fitness
-            
-    def is_valid(self, x):
-        return True
-    def random_solution(self):
-        return [choice([1,-1]) for _ in range(128)]
-
 class ECProblem(OptimisationProblem):
-    def __init__(self, size, compression, environment, linkages=None):
+    def __init__(self, size: int, compression: str, environment: str, linkages: List[int]=None):
+        """
+        Construtor for a problem with an environment and a compression mappings, as introduced in 
+        "Deep Optimisation: Learning and Searching in Deep Representations of Combinatorial
+        Optimisation Problems", Jamie Caldwell. 
+
+        Args:   
+            size: int
+                The size of the problem.
+            compression: str
+                The compression mapping being used. Should be one of "nov", "ov", "ndov", "npov".
+            environment: str
+                The environment being used. Should be one of "gc", "hgc", "rs".
+            linkages: List[int]
+                Specified the linkages between layers of the tree in the HGC environment mapping.
+        """
+        super().__init__()
+        compression = compression.lower()
+        environment = environment.lower()
         self.max_fitness = 0
         self.size = size
         compression_func = None
+        partial_solutions = [[[-1,-1,-1,-1],[-1,1,-1,1],[1,-1,1,-1],[1,1,1,1]],
+                             [[-1,-1,-1,-1],[-1,1,-1,1],[1,-1,-1,1],[1,1,1,1]],
+                             [[-1,-1,-1,1],[-1,-1,1,-1],[-1,1,-1,-1],[1,-1,-1,-1]],
+                             [[1,1,1,1],[-1,-1,1,1],[-1,1,-1,-1],[1,-1,-1,-1]]] 
         if compression == "nov":
-            compression_func = nov_compression
+            compression_func = lambda x: compression_mapping(x, *partial_solutions[0])
         elif compression == "ov":
-            compression_func = ov_compression
+            compression_func = lambda x: compression_mapping(x, *partial_solutions[1])
         elif compression == "ndov":
-            compression_func = ndov_compression
+            compression_func = lambda x: compression_mapping(x, *partial_solutions[2])
         elif compression == "npov":
-            compression_func = npov_compression
+            compression_func = lambda x: compression_mapping(x, *partial_solutions[3])
         else:
             raise Exception("Compression mapping not recognised")     
 
@@ -131,64 +101,118 @@ class ECProblem(OptimisationProblem):
         elif environment == "hgc":
             if linkages is None:
                 linkages = generate_linkage(size)
-            # self.calc_fitness = lambda x : HGC(x, compression_func)
-            self.calc_fitness = lambda x : HGC2(x, compression_func, linkages)
+            self.calc_fitness = lambda x : HGC(x, compression_func, linkages)
             self.max_fitness = (size * 3 / 4) - 1
         elif environment == "rs":
             up = up_matrix(size//4)
             self.calc_fitness = lambda x : RS(x, compression_func, up)
-            self.max_fitness = size/4 + size*(9/8)
+            self.max_fitness = size * (11/8)
         else:
             raise Exception("Environment mapping not recognised")
         
-    def fitness(self, x):
-        return self.calc_fitness(x)
-    def is_valid(self, x):
-        return True
-    def random_solution(self):
-        return [choice([-1,1]) for _ in range(self.size)]
+    def fitness(self, x: np.ndarray) -> float:
+        """
+        Calculates the fitness of the solution given an environment and compression mapping.
 
-def Fr(R):
+        Args:
+            x: numpy.ndarray
+                The solution that will have its fitness calculated.
+        
+        Returns:
+            The fitness of the solution.
+        """
+        return self.calc_fitness(x)
+    def is_valid(self, x: np.ndarray) -> bool:
+        """
+        Determines whether a given solution violates any constraints on the problem.
+
+        Args:
+            x: numpy.ndarray
+                The solution which will be tested.
+
+        Returns:
+            This always returns true as there are no constraints on EC problems.
+        """
+        return True
+    def random_solution(self) -> np.ndarray:
+        """
+        Generates a solution to the problem.
+
+        Returns:
+            A random combination of 1s and -1s.
+        """
+        return np.array([choice([-1,1]) for _ in range(self.size)])
+
+def Fr(R: np.ndarray) -> float:
+    """
+    Calculates the fitness term that is the number of partial solutions in a solution for EC
+    problems.
+
+    Args:
+        R: np.ndarray
+            The modules of the solution, in shape (W/M, M), where W is the size of the solution and
+            M is the size of each module.
+    
+    Returns:
+        The number of partial solutions in the problem.
+    """
     total = 0
     for module in R:
         if module != [None, None]:
             total += 1
     return total
 
-def compress(s, compression):
-    return [compression(s[i:i + 4]) for i in range(0, len(s), 4)]
+def compress(x: np.ndarray, compression) -> np.ndarray:
+    """
+    Compresses the modules of a solution using its compression mapping.
 
-def nov_compression(m):
-    if m == [-1,-1,-1,-1]: return [-1,-1]
-    if m == [-1,1,-1,1]: return [-1,1]
-    if m == [1,-1,1,-1]: return [1,-1]
-    if m == [1,1,1,1]: return [1,1]
-    else: return [None, None]
+    Args:
+        x: np.nd_array
+            The solution to be compressed.
+        compression:
+            The compression function to be used.
+    
+    Returns:
+        The solution after it has been compressed.
+    """
+    return np.array([compression(m) for m in x.resahpe((x.shape[0]//4,4))])
 
-def ov_compression(m):
-    if m == [-1,-1,-1,-1]: return [-1,-1]
-    if m == [-1,1,-1,1]: return [-1,1]
-    if m == [1,-1,-1,1]: return [1,-1]
-    if m == [1,1,1,1]: return [1,1]
-    else: return [None, None]
+def compression_mapping(m: np.ndarray, ps1: List[int], ps2: List[int], ps3: List[int], 
+                ps4: List[int]) -> np.ndarray:
+    """
+    Defines the mapping specified by the compression.
 
-def ndov_compression(m):
-    if m == [-1,-1,-1,1]: return [-1,-1]
-    if m == [-1,-1,1,-1]: return [-1,1]
-    if m == [-1,1,-1,-1]: return [1,-1]
-    if m == [1,-1,-1,-1]: return [1,1]
-    else: return [None, None]
+    Args:
+        m: np.ndarray
+            The module that is being compressed.
+        ps1, ps2, ps3, ps4: List[int]
+            The partial solutions to the compression mapping.
+    
+    Returns:
+        The result to the compression.
+    """
+    if np.all(m == ps1): return np.array([-1,-1])
+    if np.all(m == ps2): return np.array([-1,1])
+    if np.all(m == ps3): return np.array([1,-1])
+    if np.all(m == ps4): return np.array([1,1])
+    else: return np.array([None, None])
 
-def npov_compression(m):
-    if m == [1,1,1,1]: return [-1,-1]
-    if m == [-1,-1,1,1]: return [-1,1]
-    if m == [-1,1,-1,-1]: return [1,-1]
-    if m == [1,-1,-1,-1]: return [1,1]
-    else: return [None, None]
 
-def GC(s, compression):
+def GC(x: np.ndarray, compression):
+    """
+    Calculates the fitness of a solution in the GC environment.
+
+    Args:
+        x: numpy.ndarray
+            The solution that will have its fitness calculated. 
+        compression:
+            The compression mapping being used.
+        
+        Returns:
+            The fitness of the solution.
+    """
     # max = size/2
-    R = compress(s, compression)
+    R = compress(x, compression)
     # fr=size/4 at most
     fr = Fr(R)
     # m = size/4
@@ -216,23 +240,17 @@ def A(r1, r2):
     else:
         return None
 
-def HGC(s, compression):
-    R = compress(s, compression)
-    total = Fr(R)
-    while len(R) >= 2:
-        new_R = []
-        for r in R:
-            new_r = A(r[0], r[1])
-            if new_r is not None:
-                total += 1
-            new_R.append(new_r)
-        R = [new_R[i:i + 2] for i in range(0, len(new_R), 2)]
-    r = R[0]
-    if A(r[0], r[1]):
-        total += 1
-    return total
+def generate_linkage(size: int) -> List[int]:
+    """
+    Generates the random linkage between layers of the HGC tree.
 
-def generate_linkage(size):
+    Args:
+        size: int
+            The problem size.
+    
+    Returns:
+        The linkages defined as a list.
+    """
     linkages = []
     while size > 2:
         size = size // 2
@@ -240,11 +258,26 @@ def generate_linkage(size):
         random.shuffle(linkage)
         linkages.append(linkage)
     return linkages
-def HGC2(s, compression, linkages):
+
+def HGC(s: np.ndarray, compression, linkages: List[int]):
+    """
+    Calculates the fitness of a solution in the HGC environment.
+
+    Args:
+        x: numpy.ndarray
+            The solution that will have its fitness calculated. 
+        compression:
+            The compression mapping being used.
+        linkages: List[int]
+            The linkages between the layers of the tree in HGC.
+        
+        Returns:
+            The fitness of the solution.
+    """
     R = compress(s, compression)
     total = Fr(R)
     # Flatten list
-    R = [i for r in R for i in r]
+    R = R.flatten()
     for linkage in linkages:
         new_R = []
         for i in range(0, len(linkage), 2):
@@ -255,11 +288,26 @@ def HGC2(s, compression, linkages):
         R = new_R
     return total
 
-def up_matrix(l):
+def up_matrix(l: int) -> np.ndarray:
+    """
+    Calculates the 'swiss roll' search space needed for the RS environment. This is a 
+    matrix of low matrix with a path from (m/2, m) to (m,m) with a monotonically increasing
+    fitness along it.
+
+    Args:
+        l: int
+            The length of the matrix.
+        
+    Returns:
+        The UP matrix used in the RS environment.
+    """
+    # Generate base for the matrix (without the path)
     x = [list(range(0, x+1)) + [x for _ in range(x+1, l+1)] for x in range(l//2 + 1)]
     y = [list(range(0, x+1)) + [x for _ in range(x+1, l+1)] for x in range(l//2-1, -1, -1)]
 
     x = x + y
+
+    # Generate the path from (m, m/2) to (m,m)
     counter = l//2
     for i in range(l//2, l):
         x[l//2][i] = counter
@@ -276,9 +324,23 @@ def up_matrix(l):
     for i in range(0, l+1):
         x[l][i] = counter
         counter += 1
-    return x
+    return np.array(x)
 
-def RS(s, compression, up):
+def RS(s: np.ndarray, compression, up: np.ndarray) -> float:
+    """
+    Calculates the fitness of a solution in the GC environment.
+
+    Args:
+        x: numpy.ndarray
+            The solution that will have its fitness calculated. 
+        compression:
+            The compression mapping being used.
+        up: numpy.ndarray
+            The matrix used to calculate where on the path the current solution is.
+        
+        Returns:
+            The fitness of the solution.
+    """
     R = compress(s, compression)
     total = Fr(R)
     x = 0
@@ -296,7 +358,20 @@ def RS(s, compression, up):
     return total
 
 class MKP(OptimisationProblem):
-    def __init__(self, file, id):
+    """
+    Class to implement the Multi Dimensional Knapsack Problem.
+    """
+    def __init__(self, file: str, id: int):
+        """
+        Constructor method for MKP. Loads in the weight matrix and constraints matrix for a 
+        particular instance of the MKP.
+
+        Args:
+            file: str
+                The file to extract an MKP instance from.
+            id: int
+                The problem instance ID.
+        """
         # c = item values
         # A = dimensions x items
         # # Each row is a dimension
@@ -305,29 +380,73 @@ class MKP(OptimisationProblem):
         self.c, self.A, self.b = mkp.MKPpopulate(file, id)
         self.utility = self.get_utility_order()
         self.max_fitness = 0
-    def fitness(self, x) -> float:
+    def fitness(self, x: np.ndarray) -> float:
+        """
+        Calculate the fitness of any assignment of items.
+
+        Args:
+            x: numpy.ndarray
+                The solution to have its fitness calculated, where each element is a '1' to 
+                represent a 1 and a '-1' to represent a 0.
+        
+        Returns:
+            The fitness.
+        """
         if self.is_valid(x):
-            x = np.array(x)
+            # Convert solution from 1s and -1s to 1s and 0s
             x = (x + 1) / 2
-            return self.c.dot(np.array(x))
+            return self.c.dot(x)
         else:
              return 0
-    def is_valid(self, x) -> bool:
+    def is_valid(self, x: np.ndarray) -> bool:
+        """
+        Determines whether a given solution violates any constraints on the problem.
+
+        Args:
+            x: numpy.ndarray
+                The solution which will be tested.
+
+        Returns:
+            True if the solution is valid and False if the solution violates any constraints.
+        """
         # Convert from -1 and +1 to 0 and 1
-        x = np.array(x)
         x = (x + 1) / 2
         return np.all(self.A.dot(x) <= self.b)
-    def random_solution(self):
-        return [-1 for _ in range(len(self.c))]
+    def random_solution(self) -> np.ndarray:
+        """
+        Generates an empty knapsack.
+
+        Returns:
+            A numpy array containing all -1s.
+        """
+        return np.full(len(self.c), -1)
     
-    def get_utility_order(self):
+    def get_utility_order(self) -> np.ndarray:
+        """
+        Calculates the order of the items in terms of their utility.
+
+        Returns:
+            A numpy array of the items indices in order of utility increasing.
+        """
         # sum columns
         total_weight = self.A.sum(axis=0)
         utility = self.c / total_weight
         # return indices of items in order of utility ascending
         return np.argsort(utility)
     
-    def repair(self, s):
+    def repair(self, s: np.ndarray) -> np.ndarray:
+        """
+        Repairs an invalid solution to a good nearby valid solution.
+
+        Args:
+            s: np.ndarray   
+                The solution to be repaired.
+        
+        Returns:
+            The repaired solution.
+        """
+        if self.is_valid(s):
+            return s
         valid = False
         item_i = 0
         # Remove items with low utility until feasible
@@ -345,9 +464,8 @@ class MKP(OptimisationProblem):
             if s[i] == -1:
                 s[i] == 1
                 if not self.is_valid(s):
-                    s[i] = 0
+                    s[i] = -1
         return s
 
-
 if __name__=="__main__":
-    print(up_matrix(8))
+    print("\n".join([" ".join(str(e) for e in r) for r in up_matrix(8)]))
