@@ -5,7 +5,7 @@ import torch.nn.functional as F
 from torch import nn
 import random
 
-from DOBase import DOBase
+from .DOBase import DOBase
 
 class DOAE(DOBase):
     """

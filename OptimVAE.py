@@ -44,7 +44,7 @@ class OptimVAEHandler(OptimHandler):
             dataset = DataLoader(TensorDataset(solutions), batch_size=batch_size, shuffle=True)
             for i,x in enumerate(dataset):
                 loss = self.model.learn_from_sample(x[0], optimizer, beta)
-                # print("Epoch {}/{} - {}/{} - Loss = {}".format(epoch+1,epochs,i,len(population),loss))
+                # print("Epoch {}/{} - {}/{} - Loss = {}".format(epoch+1,epochs,i,len(solutions),loss["recon"].item()))
         # show_mu_sd(model, x["solution"])
     
     @torch.no_grad()

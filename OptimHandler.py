@@ -100,9 +100,8 @@ class OptimHandler(ABC):
             if torch.equal(solution, new_solution) or last_improve[i] > change_tolerance:
                 last_improve[i] += 1
                 continue
-            new_fitness = self.problem.fitness(self.to_int_list(new_solution))
+            new_fitness = self.problem.fitness(new_solution.numpy())
             evaluations += 1
-
             if new_fitness >= fitness:
                 if new_fitness > fitness:
                     last_improve[i] = 0 
@@ -146,7 +145,7 @@ class OptimHandler(ABC):
             new_solutions[torch.arange(new_solutions.shape[0]),i] *= -1
 
             _ = self.assess_changes(solutions, fitnesses, new_solutions, change_tolerance,
-                                    last_improve, 0)
+                                    last_improve)
             if torch.any(fitnesses == self.problem.max_fitness): 
                 return (solutions, fitnesses, 0, True)
             if torch.all(last_improve > change_tolerance):

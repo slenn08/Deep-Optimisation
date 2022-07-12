@@ -4,7 +4,7 @@ import numpy as np
 import sys
 from abc import ABC, abstractmethod
 import random
-import MKP_populate_function as mkp
+from . import MKP_populate_function as mkp
 
 class OptimisationProblem(ABC):
     """
@@ -158,7 +158,7 @@ def Fr(R: np.ndarray) -> float:
     """
     total = 0
     for module in R:
-        if module != [None, None]:
+        if None not in module:
             total += 1
     return total
 
@@ -175,7 +175,7 @@ def compress(x: np.ndarray, compression) -> np.ndarray:
     Returns:
         The solution after it has been compressed.
     """
-    return np.array([compression(m) for m in x.resahpe((x.shape[0]//4,4))])
+    return np.array([compression(m) for m in x.reshape((x.shape[0]//4,4))])
 
 def compression_mapping(m: np.ndarray, ps1: List[int], ps2: List[int], ps3: List[int], 
                 ps4: List[int]) -> np.ndarray:
@@ -428,10 +428,10 @@ class MKP(OptimisationProblem):
         Returns:
             A numpy array of the items indices in order of utility increasing.
         """
-        # sum columns
+        # Sum columns to get total weight of each item
         total_weight = self.A.sum(axis=0)
         utility = self.c / total_weight
-        # return indices of items in order of utility ascending
+        # Return indices of items in order of utility ascending
         return np.argsort(utility)
     
     def repair(self, s: np.ndarray) -> np.ndarray:
@@ -466,6 +466,3 @@ class MKP(OptimisationProblem):
                 if not self.is_valid(s):
                     s[i] = -1
         return s
-
-if __name__=="__main__":
-    print("\n".join([" ".join(str(e) for e in r) for r in up_matrix(8)]))
