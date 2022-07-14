@@ -25,7 +25,8 @@ class OptimAEHandler(OptimHandler):
         super().__init__(model, problem)
     
     def learn_from_population(self, solutions: torch.Tensor, optimizer: torch.optim.Optimizer,
-                              batch_size: int, l1_coef: float, epochs: int=400) -> None:
+                              l1_coef: float = 0.0, batch_size: int = 16, epochs: int = 400, 
+                              print_loss: bool = False) -> None:
         """
         Method to make the AE learn from the population of solutions.
 
@@ -35,21 +36,28 @@ class OptimAEHandler(OptimHandler):
                 in the population and W is the size of each solution.
             optimizer: torch.optim.Optimizer
                 The optimizer used to adjust the weights of the model.
-            batch_size: int
-                The batch size used during the learning process.
             l1_coef: int
                 The coefficient of the L1 term in the loss function.
+            batch_size: int
+                The batch size used during the learning process.
             epochs: int
                 The number of epochs to train for.
+            print_loss: bool
+                If true, information regarding the reconstruction loss of the model will be 
+                outputted.
         """
+        total_recon = 0
         for epoch in range(epochs):
             dataset = DataLoader(TensorDataset(solutions), batch_size=batch_size, shuffle=True)
             for i,x in enumerate(dataset):
                 loss = self.model.learn_from_sample(x[0], optimizer, l1_coef)
-                # print("Epoch {}/{} - {}/{} - Loss = {}".format(
-                #     epoch+1,epochs,(i+1)*batch_size,len(solutions),loss["recon"]
-                # ))
-        # show_mu_sd(model, x["solution"])
+                total_recon += loss["recon"]
+            if print_loss:
+                if (epoch+1) % 10 == 0:
+                    print("Epoch {}/{} - Recon Loss = {}".format(
+                        epoch+1,epochs,total_recon/(10*len(dataset))
+                    ))
+                    total_recon = 0
 
     @torch.no_grad()
     def optimise_solutions(self, solutions: torch.Tensor, fitnesses: torch.Tensor,

@@ -7,12 +7,12 @@ from OptimAE import OptimAEHandler
 from OptimVAE import OptimVAEHandler
 
 change_tolerance = 128
-problem_size = 100
-compression = "ov"
-environment = "gc"
-pop_size = 100
+problem_size = 128
+compression = "npov"
+environment = "hgc"
+pop_size = 64
 problem = ECProblem(problem_size,compression,environment)
-problem = MKP("COProblems\\mkp\\problems5d.txt", 1)
+#problem = MKP("COProblems\\mkp\\problems5d.txt", 1)
 
 dropout_prob = 0.2
 l1_coef = 0.0001
@@ -46,10 +46,10 @@ for hidden_size in hidden_sizes:
         model.transition(hidden_size)
         depth += 1
         optimizer = torch.optim.Adam(model.parameters(), lr=lr, weight_decay=l2_coef)
-    ae_handler.learn_from_population(population, optimizer, batch_size, l1_coef)
+    ae_handler.learn_from_population(population, optimizer, l1_coef=l1_coef, print_loss=True)
     with torch.no_grad():
         population, fitnesses, evaluations, done = ae_handler.optimise_solutions(
-            population, fitnesses, change_tolerance
+            population, fitnesses, change_tolerance, encode=True
         )
         print(torch.max(fitnesses))
     total_eval += evaluations

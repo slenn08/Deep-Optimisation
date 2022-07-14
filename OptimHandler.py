@@ -65,7 +65,6 @@ class OptimHandler(ABC):
         """
         pass
 
-    # Incomplete, need to make it general for hillclimb and MIV
     @torch.no_grad()
     def assess_changes(self, solutions: torch.Tensor, fitnesses: torch.Tensor,
                        new_solutions: torch.Tensor, change_tolerance: int,
@@ -100,6 +99,7 @@ class OptimHandler(ABC):
             if torch.equal(solution, new_solution) or last_improve[i] > change_tolerance:
                 last_improve[i] += 1
                 continue
+            #new_solution = torch.tensor(self.problem.repair(new_solution.numpy()), dtype=torch.float32)
             new_fitness = self.problem.fitness(new_solution.numpy())
             evaluations += 1
             if new_fitness >= fitness:

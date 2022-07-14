@@ -71,3 +71,5 @@ def MKPpopulate(name: str, id: int) -> Tuple:
         assert type(b) == np.ndarray
         
     return (c, A, b)
+
+#def MKPFitness(self, )
