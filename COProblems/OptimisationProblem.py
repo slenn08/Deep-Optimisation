@@ -361,7 +361,7 @@ class MKP(OptimisationProblem):
     """
     Class to implement the Multi Dimensional Knapsack Problem.
     """
-    def __init__(self, file: str, id: int, max_fitness_file: str):
+    def __init__(self, file: str, max_fitness_file: str, id: int):
         """
         Constructor method for MKP. Loads in the weight matrix and constraints matrix for a 
         particular instance of the MKP.
@@ -369,10 +369,10 @@ class MKP(OptimisationProblem):
         Args:
             file: str
                 The file to extract an MKP instance from.
-            id: int
-                The problem instance ID.
             max_fitness_file: str
                 The file containing the maximum known fitnesses of all the problem instances.
+            id: int
+                The problem instance ID.
         """
         # c = item values
         # A = dimensions x items
@@ -381,8 +381,9 @@ class MKP(OptimisationProblem):
         # b = knapsack size in each dimension
         self.c, self.A, self.b = mkp.MKPpopulate(file, id)
         self.utility = self.get_utility_order()
-        #self.max_fitness = mkp.MKPFitness(file, id)
-        self.max_fitness = 0
+        self.max_fitness = mkp.MKPFitness(max_fitness_file, id)
+        print(self.max_fitness)
+
     def fitness(self, x: np.ndarray) -> float:
         """
         Calculate the fitness of any assignment of items.

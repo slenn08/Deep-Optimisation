@@ -12,7 +12,7 @@ compression = "npov"
 environment = "hgc"
 pop_size = 64
 problem = ECProblem(problem_size,compression,environment)
-#problem = MKP("COProblems\\mkp\\problems5d.txt", 1)
+problem = MKP("COProblems\\mkp\\problems5d.txt", "COProblems\\mkp\\fitnesses5d.txt", 14)
 
 dropout_prob = 0.2
 l1_coef = 0.0001
