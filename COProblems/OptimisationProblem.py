@@ -361,7 +361,7 @@ class MKP(OptimisationProblem):
     """
     Class to implement the Multi Dimensional Knapsack Problem.
     """
-    def __init__(self, file: str, id: int, max_fitness_file: str="mkp\\fitnesses.txt"):
+    def __init__(self, file: str, id: int, max_fitness_file: str):
         """
         Constructor method for MKP. Loads in the weight matrix and constraints matrix for a 
         particular instance of the MKP.
