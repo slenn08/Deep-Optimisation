@@ -48,26 +48,30 @@ reg_dict = {"{}_{}_{}".format(c,e,problem_size) : r for (c,e,problem_size),r in 
 problems = itertools.product(["nov","ov","ndov","npov"],[16,32,64,128,256])
 pop_dict = {"{}_{}".format(c,problem_size) : r for (c,problem_size),r in zip(list(problems),populations)}
 
+compression_ratio = 0.9
+
 # Change this to get different combinations of compressions, environments, and sizes
-# This is expecting one environment, one compression, and multiple sizes
-sizes = [16,32,64,128,256]
-problems = itertools.product(["nov"],["gc"],sizes)
+# This is expecting one compression, one environment, and multiple sizes for graphing,
+# although this could be slightly adapted to run multiple compression and environments
+sizes = [16,32,64,128]
+problems = itertools.product(["ov"],["rs"],sizes)
 
 evals = []
 for c, e, problem_size in problems:
+    change_tolerance = problem_size * 3
     # Generate problem and params
     print(c,e,problem_size)
     problem_string = "{}_{}_{}".format(c,e,problem_size)
     problem = ECProblem(problem_size, c, e)
     l1_coef, l2_coef = reg_dict[problem_string]
-    pop_size = pop_dict["{}_{}".format(c,problem_size)]
+    pop_size = pop_dict["{}_{}".format(c,problem_size)] * 3
 
     # Create model and population
     model = DOAE(problem_size, 0.2)
     hidden_size = problem_size
     handler = OptimAEHandler(model, problem)
     population, fitnesses = handler.generate_population(pop_size)
-    population, fitnesses, _, done = handler.hillclimb(population, fitnesses, problem_size)
+    population, fitnesses, _, done = handler.hillclimb(population, fitnesses, change_tolerance)
     handler.print_statistics(fitnesses)
 
     max_depth = 6
@@ -77,17 +81,17 @@ for c, e, problem_size in problems:
     while True:
         # Do transition
         if depth < max_depth:
-            hidden_size = round(0.8 * hidden_size)
+            hidden_size = round(compression_ratio * hidden_size)
             model.transition(hidden_size)
             depth += 1
             optimizer = torch.optim.Adam(model.parameters(), lr=0.001, weight_decay=l2_coef)
         handler.learn_from_population(population, optimizer, l1_coef=l1_coef)
         population, fitnesses, evaluations, done = handler.optimise_solutions(
-            population, fitnesses, problem_size, encode=True
+            population, fitnesses, change_tolerance, encode=True
         )
         handler.print_statistics(fitnesses)
         total_evals += evaluations
-        print(total_evals)
+        print("Evaluations: {}".format(total_evals))
         if done:
             break
     evals.append(total_evals)

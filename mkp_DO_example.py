@@ -13,7 +13,6 @@ dropout_prob = 0.2
 l1_coef = 0.0001
 l2_coef = 0.0001
 lr = 0.002
-batch_size = 16
 compression_ratio = 0.8
 model = DOAE(problem_size, dropout_prob)
 hidden_size = problem_size
@@ -38,7 +37,7 @@ while True:
     )
     handler.print_statistics(fitnesses)
     total_eval += evaluations
-    print(total_eval)
+    print("Evaluations: {}".format(total_eval))
 
     best_i = torch.argmax(fitnesses)
     print("Best solution - fitness = {}".format(fitnesses[best_i].item()))

@@ -32,7 +32,7 @@ while True:
     )
     handler.print_statistics(fitnesses)
     total_eval += evaluations
-    print(total_eval)
+    print("Evaluations: {}".format(total_eval))
 
     best_i = torch.argmax(fitnesses)
     print("Best solution - fitness = {}".format(fitnesses[best_i].item()))

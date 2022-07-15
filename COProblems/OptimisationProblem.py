@@ -1,7 +1,6 @@
 from random import choice
 from typing import List
 import numpy as np
-import sys
 from abc import ABC, abstractmethod
 import random
 from . import MKP_populate_function as mkp
