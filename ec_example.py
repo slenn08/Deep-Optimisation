@@ -53,8 +53,10 @@ compression_ratio = 0.9
 # Change this to get different combinations of compressions, environments, and sizes
 # This is expecting one compression, one environment, and multiple sizes for graphing,
 # although this could be slightly adapted to run multiple compression and environments
-sizes = [16,32,64,128]
-problems = itertools.product(["ov"],["rs"],sizes)
+# Note that the maximum problem size that is supported in this script is up to 256 as 
+# l1 and l2 values for larger sizes have not been calculated.
+sizes = [16,32,64,128,256]
+problems = itertools.product(["nov"],["hgc"],sizes)
 
 evals = []
 for c, e, problem_size in problems:
@@ -64,7 +66,7 @@ for c, e, problem_size in problems:
     problem_string = "{}_{}_{}".format(c,e,problem_size)
     problem = ECProblem(problem_size, c, e)
     l1_coef, l2_coef = reg_dict[problem_string]
-    pop_size = pop_dict["{}_{}".format(c,problem_size)] * 3
+    pop_size = pop_dict["{}_{}".format(c,problem_size)]
 
     # Create model and population
     model = DOAE(problem_size, 0.2)

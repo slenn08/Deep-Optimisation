@@ -87,8 +87,6 @@ class OptimAEHandler(OptimHandler):
         self.model.eval()
         evaluations = 0
         for layer in range(self.model.num_layers-1, 0, -1):
-            print("Optimising from layer {}".format(layer))
-
             last_improve = torch.zeros_like(fitnesses)
 
             while True:
