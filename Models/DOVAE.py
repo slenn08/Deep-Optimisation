@@ -128,7 +128,7 @@ class DOVAE(DOBase):
         new_reconstruction = torch.sign(self.decode(new_hidden_repr))
         delta_s = new_reconstruction - old_reconstruction
 
-        new_solution = x + delta_s
+        new_solution = torch.sign(x + delta_s)
         return new_solution
     
     def transition(self) -> None:

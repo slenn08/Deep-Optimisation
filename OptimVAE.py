@@ -23,7 +23,7 @@ class OptimVAEHandler(OptimHandler):
         super().__init__(model, problem)
     
     def learn_from_population(self, solutions: torch.Tensor, optimizer: torch.optim.Optimizer,
-                              batch_size: int, beta: float, epochs: int=400) -> None:
+                              batch_size: int = 16, beta: float = 0.1, epochs: int=400) -> None:
         """
         Method to make the VAE learn from the population of solutions.
 
@@ -35,7 +35,7 @@ class OptimVAEHandler(OptimHandler):
                 The optimizer used to adjust the weights of the model.
             batch_size: int
                 The batch size used during the learning process.
-            BETA: int
+            beta: int
                 The coefficient of the KL Divergence term in the loss function.
             epochs: int
                 The number of epochs to train for.

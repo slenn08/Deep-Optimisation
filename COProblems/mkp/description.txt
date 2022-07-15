@@ -1,0 +1,5 @@
+These files describe a subset of problems from P.C.Chu and J.E.Beasley
+"A genetic algorithm for the multidimensional knapsack problem" (1997),
+of size 100, with their respective best known fitnesses. In each file,
+the first 10 problems have a tightness ratio of 0.25, the second 10
+0.5, and the last 10 0.75.
