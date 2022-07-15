@@ -164,7 +164,7 @@ class OptimHandler(ABC):
 
     def generate_population(self, pop_size: int) -> Tuple[torch.Tensor, torch.Tensor]:
         """
-        Generates a random solution to the given problem.
+        Generates a random population to the given problem.
 
         Args:
             pop_size: int
