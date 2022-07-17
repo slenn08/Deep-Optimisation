@@ -34,7 +34,7 @@ def cosine_similarity(x: torch.Tensor, y: torch.Tensor) -> torch.Tensor:
     y_sizes = torch.sqrt(torch.sum(torch.pow(y,2),dim=1))
     return x.matmul(y.T) / torch.outer(x_sizes, y_sizes)
 
-problem_size = 256
+problem_size = 64
 compression = "nov"
 environment = "gc"
 pop_size = 128
@@ -42,7 +42,7 @@ problem = ECProblem(problem_size,compression,environment)
 
 handler = OptimAEHandler(None, problem)
 population, fitnesses = handler.generate_population(pop_size)
-population, fitnesses, _, _ = handler.hillclimb(population, fitnesses, 128)
+population, fitnesses, _, _ = handler.hillclimb(population, fitnesses, 64)
 
 # population = data["nov_gc_256"][:pop_size]
 # fitnesses = torch.tensor(list(map(lambda x : x[1], population)), dtype=torch.float32)
@@ -51,7 +51,7 @@ population, fitnesses, _, _ = handler.hillclimb(population, fitnesses, 128)
 lr = 0.001
 batch_size = 16
 
-points_dim = 16
+points_dim = 8
 points_number = problem_size
 pos_emb_vals = torch.empty((points_number, 1, points_dim))
 torch.nn.init.uniform_(pos_emb_vals, -0.01, 0.01)
@@ -61,11 +61,8 @@ encoder_layer = torch.nn.TransformerEncoderLayer(d_model=points_dim, nhead=2)
 pos_model = torch.nn.TransformerEncoder(encoder_layer, 2)
 
 encoder = torch.nn.Sequential(
-    torch.nn.Linear(problem_size, 20),
-    torch.nn.Tanh(), 
-    torch.nn.Linear(20, 16),
-    torch.nn.Tanh(),
-    torch.nn.Linear(16, points_dim),
+    torch.nn.Linear(problem_size, points_dim),
+    torch.nn.Tanh()
 )
 decoder = torch.nn.Sequential(
     torch.nn.Linear(points_number, problem_size),
@@ -80,13 +77,14 @@ epochs = 500
 for epoch in range(epochs):
     dataset = DataLoader(TensorDataset(population), batch_size=batch_size, shuffle=True)
     for i,x in enumerate(dataset):
-        new_pos_embs = pos_model(pos_emb)
-        sol_emb = encoder(x[0])
+        #new_pos_embs = pos_model(pos_emb)
+        new_pos_embs = pos_emb
+        sol_emb = encoder(F.dropout(x[0], 0.2))
         # print(sol_emb.shape)
         # print(new_pos_embs.T.shape)
         #print(sol_emb.matmul(new_pos_embs.T[:,0,:]))
-        distances = torch.cdist(sol_emb, new_pos_embs[:,0,:])
-        #distances = cosine_similarity(sol_emb, new_pos_embs[:,0,:])
+        #distances = torch.cdist(sol_emb, new_pos_embs[:,0,:])
+        distances = cosine_similarity(sol_emb, new_pos_embs[:,0,:])
         recon = decoder(distances)
         mse = F.mse_loss(recon, x[0])
         # distance_loss = 0.001 * torch.mean(distances)
@@ -96,16 +94,20 @@ for epoch in range(epochs):
         loss.backward()
         optimizer.step()
         print("Epoch {}/{} - {}/{} - Loss = {}".format(epoch+1,epochs,i,len(population),mse))
+torch.set_printoptions(profile="full")
+print(pos_emb_vals)
 
 handler.print_statistics(fitnesses)
 i = fitnesses.argmax(dim=0)
 solution = population[i]
 print(fitnesses[i])
 latents = encoder[:2](solution)
-pos_embs = pos_model(pos_emb)[:,0,:]
+pos_embs = pos_emb[:,0,:] #pos_model(pos_emb)[:,0,:]
 
-sol_embs = encoder[2:](latents).reshape((1,points_dim))
-distances = torch.cdist(sol_embs, pos_embs)
+#sol_embs = encoder[2:](latents).reshape((1,points_dim))
+sol_embs = latents.reshape((1,points_dim))
+distances = torch.cdist(sol_embs, pos_embs).reshape(1,points_number)
+distances = cosine_similarity(sol_embs, pos_embs).reshape(1,points_number)
 old_recon = torch.sign(decoder(distances)).reshape((problem_size))
 
 print(latents)
@@ -117,9 +119,9 @@ for i ,(ax, latent) in enumerate(zip(axes, latents)):
     values = np.linspace(-1,1,1000)
     for x in values:
         l[i] = x
-        new_sol_embs = encoder[2:](l).reshape((1,points_dim))
-        distances = torch.cdist(new_sol_embs, pos_embs)
-        #distances = cosine_similarity(new_sol_embs, pos_embs)
+        new_sol_embs =  l.reshape((1,points_dim))# encoder[2:](l).reshape((1,points_dim))
+        #distances = torch.cdist(new_sol_embs, pos_embs).reshape(1,points_number)
+        distances = cosine_similarity(new_sol_embs, pos_embs).reshape(1,points_number)
         new_recon = decoder(distances)
         new_recon = torch.sign(new_recon).reshape((problem_size))
         delta_s = new_recon - old_recon
@@ -128,5 +130,6 @@ for i ,(ax, latent) in enumerate(zip(axes, latents)):
         fitness = problem.fitness(new_s.detach().numpy().reshape((problem_size)))
         new_fitnesses.append(fitness)
     ax.plot(values,new_fitnesses)
-    
+
+plt.title("mesh")
 plt.show()

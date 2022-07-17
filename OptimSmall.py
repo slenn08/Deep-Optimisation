@@ -1,0 +1,107 @@
+import torch
+from torch.utils.data import DataLoader, TensorDataset
+from typing import Tuple
+import scipy.optimize as optim
+
+from COProblems.OptimisationProblem import OptimisationProblem
+from Models.DOSmall import DOSmall
+from OptimHandler import OptimHandler
+
+class OptimSmallHandler(OptimHandler):
+    """
+    Describes the algorithm for carrying out DO with an AE model as specified in 
+    "Deep Optimisation: Learning and Searching in Deep Representations of Combinatorial
+    Optimisation Problems", Jamie Caldwell.
+    """
+    def __init__(self, model: DOSmall, problem: OptimisationProblem):
+        """
+        Constructor method for OptimAEHandler.
+
+        Args:
+            model: DO
+                The central AE model used in Deep Optimisation.
+            problem: OptimisationProblem
+                The problem being solved.
+        """
+        super().__init__(model, problem)
+    
+    def learn_from_population(self, solutions: torch.Tensor, optimizer: torch.optim.Optimizer,
+                              batch_size: int = 16, epochs: int = 400, 
+                              print_loss: bool = False) -> None:
+        """
+        Method to make the AE learn from the population of solutions.
+
+        Args:
+            solutions: torch.Tensor
+                The solutions to learn from. Has shape N x W, where N is the number of solutions
+                in the population and W is the size of each solution.
+            optimizer: torch.optim.Optimizer
+                The optimizer used to adjust the weights of the model.
+            l1_coef: int
+                The coefficient of the L1 term in the loss function.
+            batch_size: int
+                The batch size used during the learning process.
+            epochs: int
+                The number of epochs to train for.
+            print_loss: bool
+                If true, information regarding the reconstruction loss of the model will be 
+                outputted.
+        """
+        total_recon = 0
+        for epoch in range(epochs):
+            dataset = DataLoader(TensorDataset(solutions), batch_size=batch_size, shuffle=True)
+            for i,x in enumerate(dataset):
+                loss = self.model.learn_from_sample(x[0], optimizer)
+                total_recon += loss["recon"]
+            if print_loss:
+                if (epoch+1) % 10 == 0:
+                    print("Epoch {}/{} - Recon Loss = {}".format(
+                        epoch+1,epochs,total_recon/(10*len(dataset))
+                    ))
+                    total_recon = 0
+
+    @torch.no_grad()
+    def optimise_solutions(self, solutions: torch.Tensor, fitnesses: torch.Tensor,
+                           change_tolerance : int, encode=False) -> Tuple[torch.Tensor, torch.Tensor, int, bool]:
+        """
+        Optimises the solutions using Model-Informed Variation. 
+
+        Args:
+            solutions: torch.Tensor
+                The solutions to learn from. Has shape N x W, where N is the number of solutions
+                in the population and W is the size of each solution.
+            fitnesses: torch.Tensor
+                The list of fitnesses relating to each solution. Has shape N, where the ith fitness
+                corresponds to the ith solution in the solutions tensor.
+            change_tolerance: int
+                Defines how many neutral or negative fitness changes can be made in a row before a 
+                solution is deemed an optima during the optimisation process.
+            encode: bool
+                If true, the Encode method of varying will be used, and the Assign method otherwise.
+                Default False.
+        
+        Returns:
+            A list containing the optimised solutions, their respective fitnesses, the number of
+            evaluations used during the process, and a boolean that is true if one of the solutions
+            is a global optima.
+        """
+        self.model.eval()
+        evaluations = 0
+        last_improve = torch.zeros_like(fitnesses)
+
+        while True:       
+            new_solutions = self.model.vary(solutions)
+            evaluations += self.assess_changes(solutions, fitnesses, new_solutions,
+                                                change_tolerance, last_improve)
+            if torch.any(fitnesses == self.problem.max_fitness): 
+                return (solutions, fitnesses, evaluations, True)
+            if torch.all(last_improve > change_tolerance):
+                break   
+
+        return (solutions, fitnesses, evaluations, False)
+
+    def obj(self, x: torch.Tensor, old, new_hr, layer):
+        new_reconstruction = torch.sign(self.model.decode(new_hr, layer))
+        delta_s = new_reconstruction - old
+
+        return -self.problem.fitness(torch.sign(x + delta_s).numpy())
