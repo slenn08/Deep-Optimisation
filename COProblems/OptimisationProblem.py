@@ -3,6 +3,8 @@ from typing import List
 import numpy as np
 from abc import ABC, abstractmethod
 import random
+
+from COProblems import QUBO_populate_function
 from . import MKP_populate_function as mkp
 
 class OptimisationProblem(ABC):
@@ -469,3 +471,19 @@ class MKP(OptimisationProblem):
                 if not self.is_valid(s):
                     s[i] = -1
         return s
+
+
+class QUBO(OptimisationProblem):
+    def __init__(self, file: str, id: int):
+        self.Q = QUBO_populate_function.QUBOpopulate(file, id)
+        super().__init__()
+    
+    def fitness(self, x: np.ndarray) -> float:
+        x = (x + 1) / 2
+        return x.dot(self.Q.dot(x))
+    
+    def is_valid(self, x: np.ndarray) -> bool:
+        return True
+    
+    def random_solution(self) -> np.ndarray:
+        return np.random.randint(0,2,self.Q.shape[0])*2 -1
