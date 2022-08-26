@@ -4,7 +4,7 @@ import numpy as np
 from abc import ABC, abstractmethod
 import random
 
-from COProblems import QUBO_populate_function
+from . import QUBO_populate_function
 from . import MKP_populate_function as mkp
 
 class OptimisationProblem(ABC):
