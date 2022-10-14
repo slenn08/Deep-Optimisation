@@ -3,6 +3,7 @@ from typing import List
 import numpy as np
 from abc import ABC, abstractmethod
 import random
+import torch
 
 from . import QUBO_populate_function
 from . import MKP_populate_function as mkp
@@ -476,11 +477,18 @@ class MKP(OptimisationProblem):
 class QUBO(OptimisationProblem):
     def __init__(self, file: str, id: int):
         self.Q = QUBO_populate_function.QUBOpopulate(file, id)
+        self.Q = torch.from_numpy(self.Q).to(dtype=torch.float32)
         super().__init__()
     
     def fitness(self, x: np.ndarray) -> float:
         x = (x + 1) / 2
         return x.dot(self.Q.dot(x))
+    
+    def bulk_fitness(self, x: np.ndarray) -> float:
+        x = (x + 1) / 2
+        mul1 = x.matmul(self.Q)
+        mul2 = (mul1 * x).sum(dim=1)
+        return mul2
     
     def is_valid(self, x: np.ndarray) -> bool:
         return True
