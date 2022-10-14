@@ -382,9 +382,20 @@ class MKP(OptimisationProblem):
         # # Each column is an item
         # b = knapsack size in each dimension
         self.c, self.A, self.b = mkp.MKPpopulate(file, id)
+        self.c = torch.from_numpy(self.c).to(dtype=torch.float32)
+        self.A = torch.from_numpy(self.A).to(dtype=torch.float32)
+        self.b = torch.from_numpy(self.b).to(dtype=torch.float32)
         self.utility = self.get_utility_order()
         self.max_fitness = mkp.MKPFitness(max_fitness_file, id)
         print(self.max_fitness)
+        print(self.bulk_is_valid(torch.ones((1,100))))
+
+    def bulk_fitness(self, x: torch.Tensor) -> torch.Tensor:
+        x = (x + 1) / 2
+        return torch.where(self.bulk_is_valid(x), x.matmul(self.c), 0)
+    
+    def bulk_is_valid(self, x: torch.Tensor) -> torch.Tensor:
+        return (x.matmul(self.A.T) < self.b[None,:]).all(dim=1)
 
     def fitness(self, x: np.ndarray) -> float:
         """

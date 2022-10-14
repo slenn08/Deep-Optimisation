@@ -5,14 +5,14 @@ from Models.DOAE import DOAE
 from OptimAE import OptimAEHandler
 
 change_tolerance = 200
-problem_size = 500
+problem_size = 100
 pop_size = 100
-#problem = MKP("COProblems\\mkp\\problems5d.txt", "COProblems\\mkp\\fitnesses5d.txt", 0)
-problem = QUBO("COProblems\\qubo\\bqp500.txt", 0)
+problem = MKP("COProblems\\mkp\\problems5d.txt", "COProblems\\mkp\\fitnesses5d.txt", 0)
+#problem = QUBO("COProblems\\qubo\\bqp100.txt", 0)
 
 dropout_prob = 0.2
-l1_coef = 0.00001
-l2_coef = 0.00001
+l1_coef = 0.0001
+l2_coef = 0.0001
 lr = 0.002
 compression_ratio = 0.8
 model = DOAE(problem_size, dropout_prob)
