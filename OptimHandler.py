@@ -153,6 +153,7 @@ class OptimHandler(ABC):
         changed_fitnesses = new_fitnesses >= active_fitnesses
 
         active_last_improve[new_fitnesses <= active_fitnesses] += 1
+        active_last_improve[new_fitnesses > active_fitnesses] = 0
         last_improve[active] = active_last_improve
 
         active_solutions[changed_fitnesses] = new_solutions[active][changed_fitnesses]

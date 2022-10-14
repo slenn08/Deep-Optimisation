@@ -4,11 +4,11 @@ from COProblems.OptimisationProblem import MKP, QUBO
 from Models.DOAE import DOAE
 from OptimAE import OptimAEHandler
 
-change_tolerance = 200
+change_tolerance = 100
 problem_size = 100
 pop_size = 100
 problem = MKP("COProblems\\mkp\\problems5d.txt", "COProblems\\mkp\\fitnesses5d.txt", 0)
-#problem = QUBO("COProblems\\qubo\\bqp100.txt", 0)
+#problem = QUBO("COProblems\\qubo\\bqp1000.txt", 0)
 
 dropout_prob = 0.2
 l1_coef = 0.0001
