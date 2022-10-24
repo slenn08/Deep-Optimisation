@@ -12,7 +12,7 @@ class OptimAEHandler(OptimHandler):
     "Deep Optimisation: Learning and Searching in Deep Representations of Combinatorial
     Optimisation Problems", Jamie Caldwell.
     """
-    def __init__(self, model: DOAE, problem: OptimisationProblem):
+    def __init__(self, model: DOAE, problem: OptimisationProblem, device: str):
         """
         Constructor method for OptimAEHandler.
 
@@ -22,7 +22,7 @@ class OptimAEHandler(OptimHandler):
             problem: OptimisationProblem
                 The problem being solved.
         """
-        super().__init__(model, problem)
+        super().__init__(model, problem, device)
     
     def learn_from_population(self, solutions: torch.Tensor, optimizer: torch.optim.Optimizer,
                               l1_coef: float = 0.0, batch_size: int = 16, epochs: int = 400, 
@@ -47,8 +47,8 @@ class OptimAEHandler(OptimHandler):
                 outputted.
         """
         total_recon = 0
+        dataset = DataLoader(TensorDataset(solutions), batch_size=batch_size, shuffle=True)
         for epoch in range(epochs):
-            dataset = DataLoader(TensorDataset(solutions), batch_size=batch_size, shuffle=True)
             for i,x in enumerate(dataset):
                 loss = self.model.learn_from_sample(x[0], optimizer, l1_coef)
                 total_recon += loss["recon"]
@@ -87,7 +87,7 @@ class OptimAEHandler(OptimHandler):
         self.model.eval()
         evaluations = 0
         for layer in range(self.model.num_layers-1, 0, -1):
-            last_improve = torch.zeros_like(fitnesses)
+            last_improve = torch.zeros_like(fitnesses, device=self.device)
 
             while True:
                 new_solutions = self.model.vary(solutions, layer, encode)

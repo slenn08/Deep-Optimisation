@@ -10,7 +10,7 @@ class OptimHandler(ABC):
     Abstract class to handle the DO algorithm, given a model and a problem. Each handler
     is specific to the model as different model types may require slightly different algorithms.
     """
-    def __init__(self, model : DOBase, problem : OptimisationProblem):
+    def __init__(self, model : DOBase, problem : OptimisationProblem, device: str = "cpu"):
         """
         Constructor method for the OptimHandler class.
 
@@ -20,8 +20,10 @@ class OptimHandler(ABC):
             problem: OptimisationProblem
                 The combinatorial optimisation problem being solved.
         """
-        self.model = model
+        self.device = torch.device(device)
+        self.model = model.to(device=self.device)
         self.problem = problem
+        self.problem.set_device(self.device)
     
     @abstractmethod
     def learn_from_population(self, solutions: torch.Tensor,
@@ -143,24 +145,35 @@ class OptimHandler(ABC):
             The number of evaluations that have been made during this function call.
         """
         active = last_improve <= change_tolerance
-        new_fitnesses = self.problem.bulk_fitness(new_solutions[active])
-        evaluations = new_fitnesses.shape[0]   
+        new_fitnesses = torch.full(fitnesses.shape, -float('inf'), device=self.device)
+        new_fitnesses[active] = self.problem.bulk_fitness(new_solutions[active])
+        evaluations = new_solutions[active].shape[0]  
 
-        active_fitnesses = fitnesses[active]
-        active_solutions = solutions[active]
-        active_last_improve = last_improve[active]
+        last_improve[new_fitnesses <= fitnesses] += 1
+        last_improve[new_fitnesses > fitnesses] = 0
+        
+        changed_fitnesses = new_fitnesses >= fitnesses
+        solutions[changed_fitnesses] = new_solutions[changed_fitnesses]
+        fitnesses[changed_fitnesses] = new_fitnesses[changed_fitnesses]
 
-        changed_fitnesses = new_fitnesses >= active_fitnesses
+        # new_fitnesses = self.problem.bulk_fitness(new_solutions[active])
+        # evaluations = new_fitnesses.shape[0]   
 
-        active_last_improve[new_fitnesses <= active_fitnesses] += 1
-        active_last_improve[new_fitnesses > active_fitnesses] = 0
-        last_improve[active] = active_last_improve
+        # active_fitnesses = fitnesses[active]
+        # active_solutions = solutions[active]
+        # active_last_improve = last_improve[active]
 
-        active_solutions[changed_fitnesses] = new_solutions[active][changed_fitnesses]
-        solutions[active] = active_solutions
+        # changed_fitnesses = new_fitnesses >= active_fitnesses
 
-        active_fitnesses[changed_fitnesses] = new_fitnesses[changed_fitnesses]
-        fitnesses[active] = active_fitnesses
+        # active_last_improve[new_fitnesses <= active_fitnesses] += 1
+        # active_last_improve[new_fitnesses > active_fitnesses] = 0
+        # last_improve[active] = active_last_improve
+
+        # active_solutions[changed_fitnesses] = new_solutions[active][changed_fitnesses]
+        # solutions[active] = active_solutions
+
+        # active_fitnesses[changed_fitnesses] = new_fitnesses[changed_fitnesses]
+        # fitnesses[active] = active_fitnesses
         return evaluations
 
     @torch.no_grad() 
@@ -185,7 +198,7 @@ class OptimHandler(ABC):
             evaluations used during the process, and a boolean that is true if one of the solutions
             is a global optima.
         """
-        last_improve = torch.zeros_like(fitnesses)
+        last_improve = torch.zeros_like(fitnesses).to(self.device)
         while True:
             new_solutions = solutions.clone().detach()
             # Select which bits to flip
@@ -226,7 +239,7 @@ class OptimHandler(ABC):
         """
         population = [self.problem.random_solution() for _ in range(pop_size)]
         #[self.problem.fitness(x) for x in population]
-        population = torch.tensor(population, dtype=torch.float32)
+        population = torch.tensor(population, dtype=torch.float32, device=self.device)
         fitnesses = self.problem.bulk_fitness(population)
         #fitnesses = torch.tensor(fitnesses, dtype=torch.float32)
         return population, fitnesses

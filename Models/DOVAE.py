@@ -11,7 +11,7 @@ class DOVAE(DOBase):
     Implements a VAE model for DO. So far, only a single-layered VAE has been used,
     which is implemented here.
     """
-    def __init__(self, input_size: int, hidden_size: int):
+    def __init__(self, input_size: int, hidden_size: int, device: torch.device):
         """
         Constructor method for the VAE. All layers of the model start of as empty, and
         will be set and reset during the transition method.
@@ -28,6 +28,7 @@ class DOVAE(DOBase):
         self.decoder = None
         self.input_size = input_size
         self.hidden_size = hidden_size
+        self.device = device
     
     def encode(self, x: torch.Tensor) -> List[torch.Tensor]:
         """
@@ -63,7 +64,7 @@ class DOVAE(DOBase):
             Points sampled from each latent distribution, of shape n x L.
         """
         std = torch.exp(0.5*logvar)
-        eps = torch.randn_like(std)
+        eps = torch.randn_like(std, device=self.device)
         return mu + eps*std
 
     def forward(self, x: torch.Tensor) -> List[torch.Tensor]:
@@ -119,7 +120,7 @@ class DOVAE(DOBase):
 
         i = torch.randint(0,hidden_repr.shape[1], (changed_indices,hidden_repr.shape[0]))
         # Provides values of either 1 or -1
-        directions = torch.randint(0,2,i.shape,dtype=torch.float32) * 2 - 1
+        directions = torch.randint(0,2,i.shape,dtype=torch.float32, device=self.device) * 2 - 1
         # Take steps of size 5*std
         steps = std[torch.arange(hidden_repr.shape[0]),i] * 5 * directions
         new_hidden_repr[torch.arange(hidden_repr.shape[0]),i] += steps
@@ -136,10 +137,10 @@ class DOVAE(DOBase):
         Resets the parameters of the VAE to learn the newly optimised solutions. This should be 
         called after Model-Informed Variation has been applied to the solutions.
         """
-        self.mean_layer = weight_norm(nn.Linear(self.input_size, self.hidden_size), name='weight')
-        self.logvar_layer = weight_norm(nn.Linear(self.input_size, self.hidden_size), name='weight')      
+        self.mean_layer = weight_norm(nn.Linear(self.input_size, self.hidden_size, device=self.device), name='weight')
+        self.logvar_layer = weight_norm(nn.Linear(self.input_size, self.hidden_size, device=self.device), name='weight')      
         decoder_layer = weight_norm(nn.Linear(self.hidden_size, self.input_size), name='weight')
-        self.decoder = nn.Sequential(decoder_layer,nn.Tanh())
+        self.decoder = nn.Sequential(decoder_layer,nn.Tanh()).to(device=self.device)
     
     def loss(self, x: torch.Tensor, recon: torch.Tensor,
              mu: torch.Tensor, logvar: torch.Tensor, beta: float) -> dict:

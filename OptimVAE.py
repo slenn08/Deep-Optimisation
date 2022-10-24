@@ -10,7 +10,7 @@ class OptimVAEHandler(OptimHandler):
     """
     Describes the algorithm for carrying out DO with a VAE model.
     """
-    def __init__(self, model: DOVAE, problem: OptimisationProblem):
+    def __init__(self, model: DOVAE, problem: OptimisationProblem, device: str):
         """
         Constructor method for OptimVAEHandler.
 
@@ -20,7 +20,7 @@ class OptimVAEHandler(OptimHandler):
             problem: OptimisationProblem
                 The problem being solved.
         """
-        super().__init__(model, problem)
+        super().__init__(model, problem, device)
     
     def learn_from_population(self, solutions: torch.Tensor, optimizer: torch.optim.Optimizer,
                               batch_size: int = 16, beta: float = 0.1, epochs: int=400) -> None:
@@ -39,12 +39,13 @@ class OptimVAEHandler(OptimHandler):
                 The coefficient of the KL Divergence term in the loss function.
             epochs: int
                 The number of epochs to train for.
-        """
-        for epoch in range(epochs):
-            dataset = DataLoader(TensorDataset(solutions), batch_size=batch_size, shuffle=True)
+        """     
+        dataset = DataLoader(TensorDataset(solutions), batch_size=batch_size, shuffle=True)
+        for epoch in range(epochs):         
+            #print(epoch)          
             for i,x in enumerate(dataset):
                 loss = self.model.learn_from_sample(x[0], optimizer, beta)
-                # print("Epoch {}/{} - {}/{} - Loss = {}".format(epoch+1,epochs,i,len(solutions),loss["recon"].item()))
+                #print("Epoch {}/{} - {}/{} - Loss = {}".format(epoch+1,epochs,i,len(solutions),loss["recon"].item()))
         # show_mu_sd(model, x["solution"])
     
     @torch.no_grad()
@@ -70,12 +71,12 @@ class OptimVAEHandler(OptimHandler):
             is a global optima.
         """
         evaluations = 0
-        last_improve = torch.zeros_like(fitnesses)
+        last_improve = torch.zeros_like(fitnesses, device=self.device)
 
         while True:
             new_solutions = self.model.vary(solutions)
-            evaluations += self.assess_changes(solutions, fitnesses, new_solutions, change_tolerance,
-                                              last_improve)
+            evaluations += self.assess_changes_bulk(solutions, fitnesses, new_solutions, change_tolerance,
+                                                    last_improve)
             if torch.any(fitnesses == self.problem.max_fitness): 
                 return (solutions, fitnesses, evaluations, True)
             if torch.all(last_improve > change_tolerance):

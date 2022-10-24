@@ -18,6 +18,7 @@ class OptimisationProblem(ABC):
         Constructor method for OptimisationProblem.
         """
         self.max_fitness = float('inf')
+        self.device = torch.device("cpu")
 
     @abstractmethod
     def fitness(self, x: np.ndarray) -> float:
@@ -390,6 +391,10 @@ class MKP(OptimisationProblem):
         print(self.max_fitness)
         print(self.bulk_is_valid(torch.ones((1,100))))
 
+    def set_device(self, device: torch.device):
+        self.c = self.c.to(device=device)
+        self.A = self.A.to(device=device)
+        self.b = self.b.to(device=device)
     def bulk_fitness(self, x: torch.Tensor) -> torch.Tensor:
         x = (x + 1) / 2
         return torch.where(self.bulk_is_valid(x), x.matmul(self.c), 0)
@@ -490,6 +495,9 @@ class QUBO(OptimisationProblem):
         self.Q = QUBO_populate_function.QUBOpopulate(file, id)
         self.Q = torch.from_numpy(self.Q).to(dtype=torch.float32)
         super().__init__()
+    
+    def set_device(self, device: torch.device):
+        self.Q = self.Q.to(device=device)
     
     def fitness(self, x: np.ndarray) -> float:
         x = (x + 1) / 2

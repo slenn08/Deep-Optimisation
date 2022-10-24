@@ -12,7 +12,7 @@ class DOAE(DOBase):
     Searching in Deep Representations of Combinatorial Optimisation Problems", Jamie
     Caldwell.
     """
-    def __init__(self, input_size: int, dropout_prob: float):
+    def __init__(self, input_size: int, dropout_prob: float, device: torch.device):
         """
         Constructor method for the AE. The encoder and decoder start of as empty models, as 
         layers get added to them during subsequent transitions.
@@ -26,6 +26,7 @@ class DOAE(DOBase):
         super().__init__()
         self.encoder = nn.Sequential(nn.Dropout(dropout_prob))
         self.decoder = nn.Sequential()
+        self.device = device
         self.input_size = input_size   
         self.num_layers = 1
     
@@ -109,7 +110,7 @@ class DOAE(DOBase):
         dh = hs - h
         a = torch.mean(torch.abs(dh), dim=1)
         z, _ = torch.max(torch.abs(dh), dim=1)
-        t = a + (z - a) * torch.rand(a.shape)
+        t = a + (z - a) * torch.rand(a.shape, device=self.device)
 
         # transposes are needed to ensure gt is carried out across rows
         dh = torch.where((torch.abs(dh).T > t).T, torch.sign(dh) - h, torch.zeros_like(dh))
@@ -140,7 +141,7 @@ class DOAE(DOBase):
         if not encode:
             i = torch.randint(0,hidden_repr.shape[1], (hidden_repr.shape[0],))
             # Provides values of either 1 or -1
-            new_activations = torch.randint(0,2,i.shape,dtype=torch.float32) * 2 - 1
+            new_activations = torch.randint(0,2,i.shape,dtype=torch.float32, device=self.device) * 2 - 1
             new_hidden_repr[torch.arange(hidden_repr.shape[0]),i] = new_activations
         else:
             d_h = self.encode_step(x, layer)
@@ -171,13 +172,13 @@ class DOAE(DOBase):
         weight = torch.zeros((hidden_size, prev_size))
         nn.init.uniform_(weight, -0.01, 0.01)
 
-        encoder_layer = nn.Linear(prev_size, hidden_size)
+        encoder_layer = nn.Linear(prev_size, hidden_size, device=self.device)
         encoder_layer.weight = nn.Parameter(weight)
         decoder_layer = nn.Linear(hidden_size, prev_size)
         decoder_layer.weight = nn.Parameter(weight.transpose(0,1))
 
-        self.encoder = nn.Sequential(*(list(self.encoder) + [encoder_layer,nn.Tanh()]))
-        self.decoder = nn.Sequential(*([decoder_layer,nn.Tanh()] + list(self.decoder)))
+        self.encoder = nn.Sequential(*(list(self.encoder) + [encoder_layer,nn.Tanh()])).to(device=self.device)
+        self.decoder = nn.Sequential(*([decoder_layer,nn.Tanh()] + list(self.decoder))).to(device=self.device)
 
         self.num_layers += 1
     
