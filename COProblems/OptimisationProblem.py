@@ -21,7 +21,7 @@ class OptimisationProblem(ABC):
         self.device = torch.device("cpu")
 
     @abstractmethod
-    def fitness(self, x: np.ndarray) -> float:
+    def fitness(self, x: torch.Tensor) -> torch.Tensor:
         """
         Calculates the fitness of a solution.
 
@@ -35,7 +35,7 @@ class OptimisationProblem(ABC):
         pass
 
     @abstractmethod
-    def is_valid(self, x: np.ndarray) -> bool:
+    def is_valid(self, x: torch.Tensor) -> torch.Tensor:
         """
         Determines whether a given solution violates any constraints on the problem.
 
@@ -49,7 +49,7 @@ class OptimisationProblem(ABC):
         pass
 
     @abstractmethod
-    def random_solution(self) -> np.ndarray:
+    def random_solution(self) -> torch.Tensor:
         """
         Generates a solution to the problem.
 
@@ -95,7 +95,7 @@ class ECProblem(OptimisationProblem):
         elif compression == "npov":
             compression_func = lambda x: compression_mapping(x, *partial_solutions[3])
         else:
-            raise Exception("Compression mapping not recognised")     
+            raise Exception("Compression mapping not recognised, please enter one of 'nov', 'ov', 'ndov', 'npov")     
 
         self.calc_fitness = None
         if environment == "gc":
@@ -111,21 +111,21 @@ class ECProblem(OptimisationProblem):
             self.calc_fitness = lambda x : RS(x, compression_func, up)
             self.max_fitness = size * (11/8)
         else:
-            raise Exception("Environment mapping not recognised")
+            raise Exception("Environment mapping not recognised, please enter one of 'gc',' hgc', 'rs'")
         
-    def fitness(self, x: np.ndarray) -> float:
+    def fitness(self, x: torch.Tensor) -> torch.Tensor:
         """
         Calculates the fitness of the solution given an environment and compression mapping.
 
         Args:
-            x: numpy.ndarray
-                The solution that will have its fitness calculated.
+            x: torch.Tensor
+                The solutions that will have their fitnesses calculated.
         
         Returns:
             The fitness of the solution.
         """
         return self.calc_fitness(x)
-    def is_valid(self, x: np.ndarray) -> bool:
+    def is_valid(self, x: torch.Tensor) -> torch.Tensor:
         """
         Determines whether a given solution violates any constraints on the problem.
 
@@ -137,7 +137,7 @@ class ECProblem(OptimisationProblem):
             This always returns true as there are no constraints on EC problems.
         """
         return True
-    def random_solution(self) -> np.ndarray:
+    def random_solution(self) -> torch.Tensor:
         """
         Generates a solution to the problem.
 
@@ -146,7 +146,7 @@ class ECProblem(OptimisationProblem):
         """
         return np.array([choice([-1,1]) for _ in range(self.size)])
 
-def Fr(R: np.ndarray) -> float:
+def Fr(Rs: torch.Tensor) -> torch.Tensor:
     """
     Calculates the fitness term that is the number of partial solutions in a solution for EC
     problems.
@@ -159,13 +159,16 @@ def Fr(R: np.ndarray) -> float:
     Returns:
         The number of partial solutions in the problem.
     """
-    total = 0
-    for module in R:
-        if None not in module:
-            total += 1
+    fitnesses = torch.zeros((Rs.shape[0],))
+    for i, R in enumerate(Rs):
+        total = 0
+        for module in R:
+            if 0 not in module:
+                total += 1
+        fitnesses[i] = total
     return total
 
-def compress(x: np.ndarray, compression) -> np.ndarray:
+def compress(x: torch.Tensor, compression) -> torch.Tensor:
     """
     Compresses the modules of a solution using its compression mapping.
 
@@ -180,8 +183,8 @@ def compress(x: np.ndarray, compression) -> np.ndarray:
     """
     return np.array([compression(m) for m in x.reshape((x.shape[0]//4,4))])
 
-def compression_mapping(m: np.ndarray, ps1: List[int], ps2: List[int], ps3: List[int], 
-                ps4: List[int]) -> np.ndarray:
+def compression_mapping(m: torch.Tensor, ps1: List[int], ps2: List[int], ps3: List[int], 
+                ps4: List[int]) -> torch.Tensor:
     """
     Defines the mapping specified by the compression.
 
@@ -198,7 +201,7 @@ def compression_mapping(m: np.ndarray, ps1: List[int], ps2: List[int], ps3: List
     if np.all(m == ps2): return np.array([-1,1])
     if np.all(m == ps3): return np.array([1,-1])
     if np.all(m == ps4): return np.array([1,1])
-    else: return np.array([None, None])
+    else: return np.array([0, 0])
 
 
 def GC(x: np.ndarray, compression):
