@@ -48,7 +48,7 @@ reg_dict = {"{}_{}_{}".format(c,e,problem_size) : r for (c,e,problem_size),r in 
 problems = itertools.product(["nov","ov","ndov","npov"],[16,32,64,128,256])
 pop_dict = {"{}_{}".format(c,problem_size) : r for (c,problem_size),r in zip(list(problems),populations)}
 
-compression_ratio = 0.9
+compression_ratio = 0.8
 
 # Change this to get different combinations of compressions, environments, and sizes
 # This is expecting one compression, one environment, and multiple sizes for graphing,
@@ -56,7 +56,7 @@ compression_ratio = 0.9
 # Note that the maximum problem size that is supported in this script is up to 256 as 
 # l1 and l2 values for larger sizes have not been calculated.
 sizes = [16,32,64,128,256]
-problems = itertools.product(["nov"],["hgc"],sizes)
+problems = itertools.product(["nov"],["gc"],sizes)
 
 evals = []
 for c, e, problem_size in problems:
@@ -65,13 +65,15 @@ for c, e, problem_size in problems:
     print(c,e,problem_size)
     problem_string = "{}_{}_{}".format(c,e,problem_size)
     problem = ECProblem(problem_size, c, e)
+    print("max: {}".format(problem.max_fitness))
     l1_coef, l2_coef = reg_dict[problem_string]
     pop_size = pop_dict["{}_{}".format(c,problem_size)]
 
     # Create model and population
-    model = DOAE(problem_size, 0.2)
+    device = torch.device("cpu")
+    model = DOAE(problem_size, 0.2, device)
     hidden_size = problem_size
-    handler = OptimAEHandler(model, problem)
+    handler = OptimAEHandler(model, problem, device)
     population, fitnesses = handler.generate_population(pop_size)
     population, fitnesses, _, done = handler.hillclimb(population, fitnesses, change_tolerance)
     handler.print_statistics(fitnesses)

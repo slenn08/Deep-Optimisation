@@ -58,6 +58,9 @@ class OptimisationProblem(ABC):
         """
         pass
 
+    def set_device(self, device: torch.device):
+        self.device = device
+
 
 class ECProblem(OptimisationProblem):
     def __init__(self, size: int, compression: str, environment: str, linkages: List[int]=None):
@@ -86,6 +89,7 @@ class ECProblem(OptimisationProblem):
                              [[-1,-1,-1,-1],[-1,1,-1,1],[1,-1,-1,1],[1,1,1,1]],
                              [[-1,-1,-1,1],[-1,-1,1,-1],[-1,1,-1,-1],[1,-1,-1,-1]],
                              [[1,1,1,1],[-1,-1,1,1],[-1,1,-1,-1],[1,-1,-1,-1]]] 
+        partial_solutions = [[torch.tensor(x) for x in y] for y in partial_solutions]
         if compression == "nov":
             compression_func = lambda x: compression_mapping(x, *partial_solutions[0])
         elif compression == "ov":
@@ -125,6 +129,20 @@ class ECProblem(OptimisationProblem):
             The fitness of the solution.
         """
         return self.calc_fitness(x)
+    
+    def bulk_fitness(self, x: torch.Tensor) -> torch.Tensor:
+        """
+        Calculates the fitness of the solution given an environment and compression mapping.
+
+        Args:
+            x: torch.Tensor
+                The solutions that will have their fitnesses calculated.
+        
+        Returns:
+            The fitness of the solution.
+        """
+        return self.calc_fitness(x)
+
     def is_valid(self, x: torch.Tensor) -> torch.Tensor:
         """
         Determines whether a given solution violates any constraints on the problem.
@@ -162,11 +180,11 @@ def Fr(Rs: torch.Tensor) -> torch.Tensor:
     fitnesses = torch.zeros((Rs.shape[0],))
     for i, R in enumerate(Rs):
         total = 0
-        for module in R:
+        for module in R.view(-1,2):
             if 0 not in module:
                 total += 1
         fitnesses[i] = total
-    return total
+    return fitnesses
 
 def compress(x: torch.Tensor, compression) -> torch.Tensor:
     """
@@ -183,8 +201,8 @@ def compress(x: torch.Tensor, compression) -> torch.Tensor:
     """
     return np.array([compression(m) for m in x.reshape((x.shape[0]//4,4))])
 
-def compression_mapping(m: torch.Tensor, ps1: List[int], ps2: List[int], ps3: List[int], 
-                ps4: List[int]) -> torch.Tensor:
+def compression_mapping(m: torch.Tensor, ps1: torch.Tensor, ps2: torch.Tensor, ps3: torch.Tensor, 
+                ps4: torch.Tensor) -> torch.Tensor:
     """
     Defines the mapping specified by the compression.
 
@@ -197,6 +215,19 @@ def compression_mapping(m: torch.Tensor, ps1: List[int], ps2: List[int], ps3: Li
     Returns:
         The result to the compression.
     """
+    reshaped_x = m.view(m.shape[0],-1,4)
+    compressed = torch.zeros((m.shape[0], m.shape[1]//4, 2))
+    matches = (reshaped_x == ps1).all(axis=2)
+    compressed[matches] = torch.tensor([-1,-1], dtype=torch.float32)
+    matches = (reshaped_x == ps2).all(axis=2)
+    compressed[matches] = torch.tensor([-1,1], dtype=torch.float32)
+    matches = (reshaped_x == ps3).all(axis=2)
+    compressed[matches] = torch.tensor([1,-1], dtype=torch.float32)
+    matches = (reshaped_x == ps4).all(axis=2)
+    compressed[matches] = torch.tensor([1,1], dtype=torch.float32)
+
+    return compressed.reshape(m.shape[0], m.shape[1]//2)
+
     if np.all(m == ps1): return np.array([-1,-1])
     if np.all(m == ps2): return np.array([-1,1])
     if np.all(m == ps3): return np.array([1,-1])
@@ -218,27 +249,31 @@ def GC(x: np.ndarray, compression):
             The fitness of the solution.
     """
     # max = size/2
-    R = compress(x, compression)
+    R = compression(x)
     # fr=size/4 at most
-    fr = Fr(R)
+    fitnesses = Fr(R)
     # m = size/4
-    m = len(R)
-    Hr1 = 0
-    Hr2 = 0
-    null_present_r1 = False
-    null_present_r2 = False
-    for r in R:
-        if r[0] == 1:
-            Hr1 += 1
-        if r[1] == 1:
-            Hr2 += 1
-        if r[0] is None:
-            null_present_r1 = True
-        if r[1] is None:
-            null_present_r2 = True
-    r1_score = 0 if null_present_r1 else abs(Hr1 - (m/2))
-    r2_score = 0 if null_present_r2 else abs(Hr2 - (m/2))
-    return fr + r1_score + r2_score
+    m = R.shape[1] / 2
+
+    for i,s in enumerate(R):
+        Hr1 = 0
+        Hr2 = 0
+        null_present_r1 = False
+        null_present_r2 = False
+        for r in s.view(-1,2):
+            if r[0] == 1:
+                Hr1 += 1
+            if r[1] == 1:
+                Hr2 += 1
+            if r[0] == 0:
+                null_present_r1 = True
+            if r[1] == 0:
+                null_present_r2 = True
+        r1_score = 0 if null_present_r1 else abs(Hr1 - (m/2))
+        r2_score = 0 if null_present_r2 else abs(Hr2 - (m/2))
+        fitnesses[i] += r1_score + r2_score
+    
+    return fitnesses
 
 def A(r1, r2):
     if r1 == r2:
