@@ -19,13 +19,15 @@ class MKP(OptimisationProblem):
                 The file containing the maximum known fitnesses of all the problem instances.
             id: int
                 The problem instance ID.
+            device: torch.device
+                The device that the problem is run on.
         """
         # c = item values
         # A = dimensions x items
         # # Each row is a dimension
         # # Each column is an item
         # b = knapsack size in each dimension
-        self.device = device
+        super.__init__(device)
         self.c, self.A, self.b = mkp.MKPpopulate(file, id)
         self.c = torch.from_numpy(self.c).to(dtype=torch.float32, device=device)
         self.A = torch.from_numpy(self.A).to(dtype=torch.float32, device=device)
@@ -39,12 +41,12 @@ class MKP(OptimisationProblem):
         Calculate the fitness of any assignment of items.
 
         Args:
-            x: numpy.ndarray
-                The solution to have its fitness calculated, where each element is a '1' to 
+            x: torch.Tensor
+                The solutions to have their fitness calculated, where each element is a '1' to 
                 represent a 1 and a '-1' to represent a 0.
         
         Returns:
-            The fitness.
+            The fitnesses of each solution.
         """
         x = (x + 1) / 2
         return torch.where(self.is_valid(x), x.matmul(self.c), 0)

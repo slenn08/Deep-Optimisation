@@ -23,7 +23,6 @@ class OptimHandler(ABC):
         self.device = torch.device(device)
         self.model = model.to(device=self.device)
         self.problem = problem
-        self.problem.set_device(self.device)
     
     @abstractmethod
     def learn_from_population(self, solutions: torch.Tensor,
@@ -65,8 +64,8 @@ class OptimHandler(ABC):
             evaluations used during the process, and a boolean that is true if one of the solutions
             is a global optima.
         """
-        pass
-
+        pass 
+    
     @torch.no_grad()
     def assess_changes(self, solutions: torch.Tensor, fitnesses: torch.Tensor,
                        new_solutions: torch.Tensor, change_tolerance: int,
@@ -96,57 +95,9 @@ class OptimHandler(ABC):
         Returns:
             The number of evaluations that have been made during this function call.
         """
-        evaluations = 0
-        for i, (solution, new_solution, fitness) in enumerate(zip(solutions, new_solutions, fitnesses)):
-            if torch.equal(solution, new_solution) or last_improve[i] > change_tolerance:
-                last_improve[i] += 1
-                continue
-            new_fitness = self.problem.fitness(new_solution.numpy())
-            evaluations += 1
-            if new_fitness >= fitness:
-                if new_fitness > fitness:
-                    last_improve[i] = 0 
-                else:
-                    last_improve[i] += 1
-                solutions[i] = new_solution
-                fitnesses[i] = new_fitness       
-            else:
-                last_improve[i] += 1
-
-        return evaluations  
-    
-    @torch.no_grad()
-    def assess_changes_bulk(self, solutions: torch.Tensor, fitnesses: torch.Tensor,
-                            new_solutions: torch.Tensor, change_tolerance: int,
-                            last_improve: torch.Tensor) -> int:
-        """
-        Determines which changes to solutions are positive and neutral and should be kept, and 
-        which changes are negative and should be discarded. Solutions and fitnesses are modified
-        in-place during this process.
-
-        Args:
-            solutions: torch.Tensor
-                The current solutions. Has shape N x W, where N is the number of solutions
-                in the population and W is the size of each solution.
-            fitnesses: torch.Tensor
-                The list of fitnesses relating to each solution. Has shape N, where the ith fitness
-                corresponds to the ith solution in the solutions tensor.
-            new_solutions: torch.Tensor
-                The new proposed solutions after Model-Informed Variation has been applied.
-            change_tolerance: int
-                Defines how many neutral or negative fitness changes can be made in a row before a 
-                solution is deemed an optima during the optimisation process.
-            last_improve: torch.Tensor
-                A list of numbers containing how many attempts have been made at making a change to 
-                each solution without encountering a positive solution. If the ith element is greater
-                than change_tolerance, no more changes shall be made to the ith solution. Has shape N.
-        
-        Returns:
-            The number of evaluations that have been made during this function call.
-        """
         active = last_improve <= change_tolerance
         new_fitnesses = torch.full(fitnesses.shape, -float('inf'), device=self.device)
-        new_fitnesses[active] = self.problem.bulk_fitness(new_solutions[active])
+        new_fitnesses[active] = self.problem.fitness(new_solutions[active])
         evaluations = new_solutions[active].shape[0]  
 
         last_improve[new_fitnesses <= fitnesses] += 1
@@ -156,24 +107,6 @@ class OptimHandler(ABC):
         solutions[changed_fitnesses] = new_solutions[changed_fitnesses]
         fitnesses[changed_fitnesses] = new_fitnesses[changed_fitnesses]
 
-        # new_fitnesses = self.problem.bulk_fitness(new_solutions[active])
-        # evaluations = new_fitnesses.shape[0]   
-
-        # active_fitnesses = fitnesses[active]
-        # active_solutions = solutions[active]
-        # active_last_improve = last_improve[active]
-
-        # changed_fitnesses = new_fitnesses >= active_fitnesses
-
-        # active_last_improve[new_fitnesses <= active_fitnesses] += 1
-        # active_last_improve[new_fitnesses > active_fitnesses] = 0
-        # last_improve[active] = active_last_improve
-
-        # active_solutions[changed_fitnesses] = new_solutions[active][changed_fitnesses]
-        # solutions[active] = active_solutions
-
-        # active_fitnesses[changed_fitnesses] = new_fitnesses[changed_fitnesses]
-        # fitnesses[active] = active_fitnesses
         return evaluations
 
     @torch.no_grad() 
@@ -199,6 +132,7 @@ class OptimHandler(ABC):
             is a global optima.
         """
         last_improve = torch.zeros_like(fitnesses).to(self.device)
+        total_evals = 0
         while True:
             new_solutions = solutions.clone().detach()
             # Select which bits to flip
@@ -206,12 +140,13 @@ class OptimHandler(ABC):
             # Flips the selected bits
             new_solutions[torch.arange(new_solutions.shape[0]),i] *= -1
 
-            evaluations = self.assess_changes_bulk(solutions, fitnesses, new_solutions, change_tolerance,
-                                                  last_improve)
+            evaluations = self.assess_changes(solutions, fitnesses, new_solutions, change_tolerance,
+                                              last_improve)
+            total_evals += evaluations
             if torch.any(fitnesses == self.problem.max_fitness): 
-                return (solutions, fitnesses, 0, True)
+                return (solutions, fitnesses, total_evals, True)
             if torch.all(last_improve > change_tolerance):
-                return (solutions, fitnesses, 0, False)
+                return (solutions, fitnesses, total_evals, False)
     
     def to_int_list(self, x):
         """
@@ -237,11 +172,8 @@ class OptimHandler(ABC):
             A tuple of tensors containing the randomly generated solutions and their associated
             fitnesses.
         """
-        population = [self.problem.random_solution() for _ in range(pop_size)]
-        #[self.problem.fitness(x) for x in population]
-        population = torch.tensor(population, dtype=torch.float32, device=self.device)
-        fitnesses = self.problem.bulk_fitness(population)
-        #fitnesses = torch.tensor(fitnesses, dtype=torch.float32)
+        population = self.problem.random_solution(pop_size)
+        fitnesses = self.problem.fitness(population)
         return population, fitnesses
 
     def print_statistics(self, fitnesses: torch.tensor):

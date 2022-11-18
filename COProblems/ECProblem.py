@@ -65,19 +65,6 @@ class ECProblem(OptimisationProblem):
             The fitnesses of the solutions.
         """
         return self.calc_fitness(x)
-    
-    def bulk_fitness(self, x: torch.Tensor) -> torch.Tensor:
-        """
-        Calculates the fitness of the solution given an environment and compression mapping.
-
-        Args:
-            x: torch.Tensor
-                The solutions that will have their fitnesses calculated.
-        
-        Returns:
-            The fitness of the solution.
-        """
-        return self.calc_fitness(x)
 
     def is_valid(self, x: torch.Tensor) -> torch.Tensor:
         """
@@ -98,7 +85,7 @@ class ECProblem(OptimisationProblem):
         Returns:
             A tensor of random solutions consisting of a combination of 1s and -1s.
         """
-        return torch.randint(0,2,(pop_size, self.size))
+        return torch.randint(0,2,(pop_size, self.size)) * 2 - 1
 
 
 def Fr(solutions: torch.Tensor) -> torch.Tensor:
