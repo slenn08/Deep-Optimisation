@@ -15,7 +15,7 @@ lr = 0.002
 batch_size = 750
 compression_ratio = 0.8
 device = "cuda" if torch.cuda.is_available() else "cpu"
-device="cpu"
+#device="cpu"
 print(device)
 device = torch.device(device)
 model = DOVAE(problem_size, round(compression_ratio * pop_size), device)

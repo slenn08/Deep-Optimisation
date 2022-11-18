@@ -13,12 +13,12 @@ class OptimisationProblem(ABC):
     Abstract class to represent an optimisation problem. Any problem to solve via DO should
     subclass from it.
     """
-    def __init__(self):
+    def __init__(self, device=torch.device("cpu")):
         """
         Constructor method for OptimisationProblem.
         """
         self.max_fitness = float('inf')
-        self.device = torch.device("cpu")
+        self.device = device
 
     @abstractmethod
     def fitness(self, x: torch.Tensor) -> torch.Tensor:
@@ -90,16 +90,12 @@ class ECProblem(OptimisationProblem):
                              [[-1,-1,-1,1],[-1,-1,1,-1],[-1,1,-1,-1],[1,-1,-1,-1]],
                              [[1,1,1,1],[-1,-1,1,1],[-1,1,-1,-1],[1,-1,-1,-1]]] 
         partial_solutions = [[torch.tensor(x) for x in y] for y in partial_solutions]
-        if compression == "nov":
-            compression_func = lambda x: compression_mapping(x, *partial_solutions[0])
-        elif compression == "ov":
-            compression_func = lambda x: compression_mapping(x, *partial_solutions[1])
-        elif compression == "ndov":
-            compression_func = lambda x: compression_mapping(x, *partial_solutions[2])
-        elif compression == "npov":
-            compression_func = lambda x: compression_mapping(x, *partial_solutions[3])
-        else:
-            raise Exception("Compression mapping not recognised, please enter one of 'nov', 'ov', 'ndov', 'npov")     
+
+        c_list = ["nov", "ov","ndov","npov"]
+        compression_i = {c:i for i, c in enumerate(c_list)}
+        if compression not in c_list:
+            raise Exception("Compression mapping not recognised, please enter one of 'nov', 'ov', 'ndov', 'npov")
+        compression_func = lambda x: compression_mapping(x, *partial_solutions[compression_i[compression]])   
 
         self.calc_fitness = None
         if environment == "gc":
@@ -163,6 +159,7 @@ class ECProblem(OptimisationProblem):
             A random combination of 1s and -1s.
         """
         return np.array([choice([-1,1]) for _ in range(self.size)])
+
 
 def Fr(Rs: torch.Tensor) -> torch.Tensor:
     """
@@ -228,12 +225,6 @@ def compression_mapping(m: torch.Tensor, ps1: torch.Tensor, ps2: torch.Tensor, p
 
     return compressed.reshape(m.shape[0], m.shape[1]//2)
 
-    if np.all(m == ps1): return np.array([-1,-1])
-    if np.all(m == ps2): return np.array([-1,1])
-    if np.all(m == ps3): return np.array([1,-1])
-    if np.all(m == ps4): return np.array([1,1])
-    else: return np.array([0, 0])
-
 
 def GC(x: np.ndarray, compression):
     """
@@ -279,9 +270,9 @@ def A(r1, r2):
     if r1 == r2:
         return r1
     else:
-        return None
+        return 0
 
-def generate_linkage(size: int) -> List[int]:
+def generate_linkage(size: int) -> list[list[int]]:
     """
     Generates the random linkage between layers of the HGC tree.
 
@@ -290,7 +281,7 @@ def generate_linkage(size: int) -> List[int]:
             The problem size.
     
     Returns:
-        The linkages defined as a list.
+        The linkages defined as a list of lists
     """
     linkages = []
     while size > 2:
@@ -300,7 +291,7 @@ def generate_linkage(size: int) -> List[int]:
         linkages.append(linkage)
     return linkages
 
-def HGC(s: np.ndarray, compression, linkages: List[int]):
+def HGC(s: torch.Tensor, compression, linkages: list[list[int]]):
     """
     Calculates the fitness of a solution in the HGC environment.
 
@@ -309,25 +300,26 @@ def HGC(s: np.ndarray, compression, linkages: List[int]):
             The solution that will have its fitness calculated. 
         compression:
             The compression mapping being used.
-        linkages: List[int]
+        linkages: list[ist[int]]
             The linkages between the layers of the tree in HGC.
         
         Returns:
             The fitness of the solution.
     """
-    R = compress(s, compression)
-    total = Fr(R)
-    # Flatten list
-    R = R.flatten()
+    Rs = compression(s)
+    fitnesses = Fr(Rs)
     for linkage in linkages:
-        new_R = []
-        for i in range(0, len(linkage), 2):
-            new_r = A(R[linkage[i]], R[linkage[i+1]])
-            if new_r is not None:
-                total += 1
-            new_R.append(new_r)
-        R = new_R
-    return total
+        new_Rs = torch.zeros((Rs.shape[0], Rs.shape[1]//2))
+        for i, R in enumerate(Rs):
+            compared_r1 = R[linkage[0::2]]
+            compared_r2 = R[linkage[1::2]]
+            #new_R = torch.zeros_like(compared_r1)
+            new_R = torch.where(compared_r1 == compared_r2, compared_r1, torch.zeros_like(compared_r1))
+            #new_R[compared_r1 == compared_r2] = compared_r1
+            fitnesses[i] += new_R[new_R != 0].shape[0]
+            new_Rs[i] = new_R
+        Rs = new_Rs
+    return fitnesses
 
 def up_matrix(l: int) -> np.ndarray:
     """
@@ -382,21 +374,22 @@ def RS(s: np.ndarray, compression, up: np.ndarray) -> float:
         Returns:
             The fitness of the solution.
     """
-    R = compress(s, compression)
-    total = Fr(R)
-    x = 0
-    y = 0
+    Rs = compression(s)
+    fitnesses = Fr(Rs)
     null_present = False
-    for r in R:
-        if r[0] == 1:
-            x += 1
-        if r[1] == 1:
-            y += 1
-        if None in r:
-            null_present = True
-    if not null_present:
-        total += up[y][x]
-    return total
+    for i, R in enumerate(Rs):
+        x = 0
+        y = 0
+        for r in R.view(-1, 2):
+            if r[0] == 1:
+                x += 1
+            if r[1] == 1:
+                y += 1
+            if 0 in r:
+                null_present = True
+        if not null_present:
+            fitnesses[i] += up[y][x]
+    return fitnesses
 
 class MKP(OptimisationProblem):
     """
