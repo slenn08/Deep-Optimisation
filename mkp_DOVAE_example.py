@@ -1,11 +1,12 @@
 import torch
 
 from COProblems.MKP import MKP
+from COProblems.QUBO import QUBO
 from Models.DOVAE import DOVAE
 from OptimVAE import OptimVAEHandler
 
 device = "cuda" if torch.cuda.is_available() else "cpu"
-device="cpu"
+#device="cpu"
 print(device)
 device = torch.device(device)
 
@@ -13,7 +14,7 @@ change_tolerance = 50
 problem_size = 100
 pop_size = 100
 problem = MKP("COProblems\\mkp\\problems30d.txt", "COProblems\\mkp\\fitnesses30d.txt", 22, device=device)
-#problem = QUBO("COProblems\\qubo\\bqp1000.txt", 0)
+#problem = QUBO("COProblems\\qubo\\bqp1000n.txt", 5, device=device)
 print("Max fitness: {}".format(problem.max_fitness))
 
 lr = 0.002

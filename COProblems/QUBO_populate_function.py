@@ -26,19 +26,24 @@ def QUBOpopulate(name: str, id: int) -> np.ndarray:
     file.close()
 
     # Define parameters
-    num_problems = int(x.pop(0))
-    print(num_problems)
-    for _ in range(id + 1):
-        size, entries = int(x.pop(0)), int(x.pop(0))
-        print(size)
-        print(entries)
-        Q = np.zeros((size, size))
-        for _ in range(entries):
-            i = int(x.pop(0)) - 1
-            j = int(x.pop(0)) - 1
-            q = int(x.pop(0))# * (2 if i != j else 1)
-            Q[i,j] = q
-            Q[j,i] = q
+    i = 1
+    cur_id = 0
+    while cur_id < id:
+        size = int(x[i])
+        entries = int(x[i + 1])
+        i += entries * 3 + 2
+        cur_id += 1
+    size = int(x[i])
+    entries = int(x[i + 1])
+    Q = np.zeros((size, size))
+    i += 2
+    for _ in range(entries):
+        m = int(x[i]) - 1
+        n = int(x[i+1]) - 1
+        q = int(x[i+2])
+        Q[m,n] = q
+        Q[n,m] = q
+        i += 3
 
     print("Instance has been loaded")
     return Q

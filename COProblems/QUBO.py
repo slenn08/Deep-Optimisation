@@ -1,6 +1,6 @@
 import torch
 
-from . import OptimisationProblem
+from .OptimisationProblem import OptimisationProblem
 from . import QUBO_populate_function
 
 class QUBO(OptimisationProblem):
@@ -64,7 +64,7 @@ class QUBO(OptimisationProblem):
         Returns:
             The random solutions.
         """
-        return torch.randint(0,2,(pop_size,self.Q.shape[0]), device=self.device) * 2 -1
+        return torch.randint(0,2,(pop_size,self.Q.shape[0]), device=self.device, dtype=torch.float32) * 2 -1
     
     def repair(self, x: torch.Tensor) -> torch.Tensor:
         """
