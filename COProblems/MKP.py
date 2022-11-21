@@ -27,7 +27,7 @@ class MKP(OptimisationProblem):
         # # Each row is a dimension
         # # Each column is an item
         # b = knapsack size in each dimension
-        super(MKP, self).__init__(device)
+        super().__init__(device)
         self.c, self.A, self.b = mkp.MKPpopulate(file, id)
         self.c = torch.from_numpy(self.c).to(dtype=torch.float32, device=device)
         self.A = torch.from_numpy(self.A).to(dtype=torch.float32, device=device)

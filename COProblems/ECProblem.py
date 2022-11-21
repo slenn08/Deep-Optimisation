@@ -68,16 +68,16 @@ class ECProblem(OptimisationProblem):
 
     def is_valid(self, x: torch.Tensor) -> torch.Tensor:
         """
-        Determines whether a given solution violates any constraints on the problem.
+        Determines whether given solutions violate any constraints on the problem.
 
         Args:
             x: numpy.ndarray
-                The solution which will be tested.
+                The solutions which will be tested.
 
         Returns:
-            This always returns true as there are no constraints on EC problems.
+            Always returns a tensor containing trues as there are no constraints on EC problems.
         """
-        return True
+        return torch.full((x.shape[0],), True)
     def random_solution(self, pop_size: int) -> torch.Tensor:
         """
         Generates random solutions to the problem.
@@ -100,7 +100,7 @@ class ECProblem(OptimisationProblem):
                 The solutions to be repaired.
         
         Returns:
-            The repaired solutions.
+            Returns the population unchanged as there are no constraints.
         """
         return x
 
@@ -133,7 +133,7 @@ def compression_mapping(s: torch.Tensor, ps1: torch.Tensor, ps2: torch.Tensor, p
 
     Args:
         s: torch.Tensor
-            The module that is being compressed.
+            The solutions that are being compressed.
         ps1, ps2, ps3, ps4: torch.Tensor
             The partial solutions to the compression mapping.
     
@@ -203,7 +203,7 @@ def generate_linkage(size: int) -> list[list[int]]:
             The problem size.
     
     Returns:
-        The linkages defined as a list of lists
+        The linkages defined as a list of lists, where for each list element i links with element i + 1, where i is even.
     """
     linkages = []
     while size > 2:

@@ -3,8 +3,8 @@ import numpy as np
 
 def MKPpopulate(name: str, id: int) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
     """
-    This function extracts the raw data from a .txt file and populates the objective function coefficients
-    array, the constraints coefficients matrix A and the right hand side b array
+    Extracts the raw data from a .txt file and populates the objective function coefficients
+    array, the constraints coefficients matrix and the knapsack capacity array.
     
     Arguments:
         name: str
@@ -13,9 +13,9 @@ def MKPpopulate(name: str, id: int) -> Tuple[np.ndarray, np.ndarray, np.ndarray]
             the id of the problem, starting from 0.
         
     returns:
-        c - item values array (shape = 1 * n)
+        c - item values array (shape = n)
         A - item weights in each dimension (shape = m * n)
-        b - knapsack capacity in each dimension (shape = 1 * m)
+        b - knapsack capacity in each dimension (shape = m)
         Where n is the number of available items and m is the number of dimensions.
     """
     
@@ -34,8 +34,6 @@ def MKPpopulate(name: str, id: int) -> Tuple[np.ndarray, np.ndarray, np.ndarray]
     while cur_id < id:
         num_columns = int(x[i])
         num_rows = int(x[i+1])
-        print(num_columns)
-        print(num_rows)
         i += num_columns + (num_columns*num_rows) + num_rows + 3
         cur_id += 1
     num_columns = int(x.pop(i))
@@ -43,7 +41,6 @@ def MKPpopulate(name: str, id: int) -> Tuple[np.ndarray, np.ndarray, np.ndarray]
     best = int(x.pop(i))
     # Populating Objective Function Coefficients
     c = np.array([float(x.pop(i)) for _ in range(num_columns)])
-    print(c)
     
     # Populating A matrix (size NumRows * NumColumns)
     const_coef = np.array([float(x.pop(i)) for _ in range(int(num_rows * num_columns))])           
