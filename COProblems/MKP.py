@@ -1,6 +1,6 @@
 import torch
 
-from . import OptimisationProblem
+from .OptimisationProblem import OptimisationProblem
 from . import MKP_populate_function as mkp
 
 class MKP(OptimisationProblem):
@@ -27,7 +27,7 @@ class MKP(OptimisationProblem):
         # # Each row is a dimension
         # # Each column is an item
         # b = knapsack size in each dimension
-        super.__init__(device)
+        super(MKP, self).__init__(device)
         self.c, self.A, self.b = mkp.MKPpopulate(file, id)
         self.c = torch.from_numpy(self.c).to(dtype=torch.float32, device=device)
         self.A = torch.from_numpy(self.A).to(dtype=torch.float32, device=device)
@@ -68,10 +68,14 @@ class MKP(OptimisationProblem):
         """
         Generates an empty knapsack for every member of the population.
 
+        Args:
+            pop_size: int
+                The size of the population of solutions.
+
         Returns:
             A tensor containing all -1s.
         """
-        return torch.full((pop_size, self.c.shape[0]), -1, device=self.device)
+        return torch.full((pop_size, self.c.shape[0]), -1, device=self.device, dtype=torch.float32)
     
     def get_utility_order(self) -> torch.Tensor:
         """
@@ -97,17 +101,18 @@ class MKP(OptimisationProblem):
         Returns:
             The repaired solutions.
         """
+        s = (s + 1) / 2
         valid = self.is_valid(s)
         # Remove items with low utility until feasible
         for i in self.utility:
-            s[i] = torch.where(not valid and s[not valid][i] == 1, -1, s[i])
-            valid[not valid] = self.is_valid(s[not valid])
+            s[:,i] = torch.where(~valid & (s[:,i] == 1), 0, s[:,i])
+            valid[~valid] = self.is_valid(s[~valid])
             if torch.all(valid):
                 break
         # Start adding items starting from highest utility if feasible
-        for i in self.utility[::-1]:
-            changeable = s[i] == -1
-            s[changeable] = 1
+        for i in self.utility.flip(-1):
+            changeable = s[:,i] == 0
+            s[changeable, i] = 1
             valid = self.is_valid(s)
-            s[changeable & ~valid] = -1
-        return s
+            s[~valid & changeable, i] = 0
+        return (s*2) - 1

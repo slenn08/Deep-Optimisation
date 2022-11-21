@@ -1,4 +1,4 @@
-from . import OptimisationProblem
+from .OptimisationProblem import OptimisationProblem
 import torch
 import random
 
@@ -78,14 +78,31 @@ class ECProblem(OptimisationProblem):
             This always returns true as there are no constraints on EC problems.
         """
         return True
-    def random_solution(self, pop_size) -> torch.Tensor:
+    def random_solution(self, pop_size: int) -> torch.Tensor:
         """
         Generates random solutions to the problem.
+
+        Args:
+            pop_size: int
+                The size of the population of solutions.
 
         Returns:
             A tensor of random solutions consisting of a combination of 1s and -1s.
         """
-        return torch.randint(0,2,(pop_size, self.size)) * 2 - 1
+        return torch.randint(0,2,(pop_size, self.size), dtype=torch.float32) * 2 - 1
+    
+    def repair(self, x: torch.Tensor) -> torch.Tensor:
+        """
+        Repairs solutions so that they remain valid.
+
+        Args:
+            x: torch.Tensor
+                The solutions to be repaired.
+        
+        Returns:
+            The repaired solutions.
+        """
+        return x
 
 
 def Fr(solutions: torch.Tensor) -> torch.Tensor:

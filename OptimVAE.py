@@ -55,7 +55,7 @@ class OptimVAEHandler(OptimHandler):
     
     @torch.no_grad()
     def optimise_solutions(self, solutions: torch.Tensor, fitnesses: torch.Tensor,
-                           change_tolerance : int) -> Tuple[torch.Tensor, torch.Tensor, int, bool]:
+                           change_tolerance : int, repair_solutions: bool=False) -> Tuple[torch.Tensor, torch.Tensor, int, bool]:
         """
         Optimises the solutions using Model-Informed Variation. 
 
@@ -69,6 +69,9 @@ class OptimVAEHandler(OptimHandler):
             change_tolerance: int
                 Defines how many neutral or negative fitness changes can be made in a row before a 
                 solution is deemed an optima during the optimisation process.
+            repair_solutions: bool
+                If the problem has a repair method, that can be called after a chance has been done to a solution
+                to ensure that any changes still allows the solutions to be valid.
         
         Returns:
             A list containing the optimised solutions, their respective fitnesses, the number of
@@ -80,6 +83,8 @@ class OptimVAEHandler(OptimHandler):
 
         while True:
             new_solutions = self.model.vary(solutions)
+            if repair_solutions:
+                new_solutions = self.problem.repair(new_solutions)
             evaluations += self.assess_changes(solutions, fitnesses, new_solutions, change_tolerance,
                                                last_improve)
             if torch.any(fitnesses == self.problem.max_fitness): 

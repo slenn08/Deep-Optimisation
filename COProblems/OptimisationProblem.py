@@ -51,3 +51,17 @@ class OptimisationProblem(ABC):
         """
         pass
 
+    @abstractmethod    
+    def repair(self, x: torch.Tensor) -> torch.Tensor:
+        """
+        Repairs solutions so that they remain valid.
+
+        Args:
+            x: torch.Tensor
+                The solutions to be repaired.
+        
+        Returns:
+            The repaired solutions.
+        """
+        pass
+

@@ -57,7 +57,24 @@ class QUBO(OptimisationProblem):
         """
         Generates a population of random problem solutions.
 
+        Args:
+            pop_size: int
+                The size of the population of solutions.
+
         Returns:
             The random solutions.
         """
         return torch.randint(0,2,(pop_size,self.Q.shape[0]), device=self.device) * 2 -1
+    
+    def repair(self, x: torch.Tensor) -> torch.Tensor:
+        """
+        Repairs solutions so that they remain valid.
+
+        Args:
+            x: torch.Tensor
+                The solutions to be repaired.
+        
+        Returns:
+            The repaired solutions.
+        """
+        return x

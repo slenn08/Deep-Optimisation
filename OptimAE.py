@@ -61,7 +61,8 @@ class OptimAEHandler(OptimHandler):
 
     @torch.no_grad()
     def optimise_solutions(self, solutions: torch.Tensor, fitnesses: torch.Tensor,
-                           change_tolerance : int, encode=False) -> Tuple[torch.Tensor, torch.Tensor, int, bool]:
+                           change_tolerance : int, encode: bool=False,
+                           repair_solutions: bool=False) -> Tuple[torch.Tensor, torch.Tensor, int, bool]:
         """
         Optimises the solutions using Model-Informed Variation. 
 
@@ -78,6 +79,9 @@ class OptimAEHandler(OptimHandler):
             encode: bool
                 If true, the Encode method of varying will be used, and the Assign method otherwise.
                 Default False.
+            repair_solutions: bool
+                If the problem has a repair method, that can be called after a chance has been done to a solution
+                to ensure that any changes still allows the solutions to be valid.
         
         Returns:
             A list containing the optimised solutions, their respective fitnesses, the number of
@@ -92,6 +96,8 @@ class OptimAEHandler(OptimHandler):
 
             while True:
                 new_solutions = self.model.vary(solutions, layer, encode)
+                if repair_solutions:
+                    new_solutions = self.problem.repair(new_solutions)
                 evaluations += self.assess_changes(solutions, fitnesses, new_solutions,
                                                    change_tolerance, last_improve)
                 if torch.any(fitnesses == self.problem.max_fitness): 

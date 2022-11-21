@@ -6,7 +6,7 @@ import torch
 
 from matplotlib import pyplot as plt
 
-from COProblems.OptimisationProblem import ECProblem
+from COProblems.ECProblem import ECProblem
 from Models.DOAE import DOAE
 from OptimAE import OptimAEHandler
 
@@ -28,12 +28,12 @@ regs = [
         (0.001,0.001),(0.001,0.001),(0.0005,0.0005),(0.0002,0.0002),(0.0001,0.0001), #rs
         # OV
         (0.001,0.001),(0.001,0.001),(0.0005,0.0005),(0.0002,0.0002),(0.0001,0.00005),
-        (0.001,0.001),(0.001,0.001),(0.0005,0.0005),(0.0005,0.0005),(0.0001,0.00005),
-        (0.001,0.001),(0.001,0.001),(0.0005,0.0005),(0.0005,0.0005),(0.0001,0.00005),
+        (0.001,0.001),(0.001,0.001),(0.0005,0.0005),(0.0002,0.0002),(0.0001,0.00005),
+        (0.001,0.001),(0.001,0.001),(0.0005,0.0005),(0.0002,0.0002),(0.0001,0.00005),
         # nDOV
         (0.001,0.001),(0.001,0.001),(0.0005,0.0003),(0.0002,0.0002),(0.0001,0.00005),
         (0.001,0.001),(0.001,0.001),(0.0005,0.0003),(0.0002,0.0002),(0.0001,0.00005),
-        (0.0005,0.0005),(0.0002,0.0002),(0.0002,0.0002),(0.0001,0.0001),(0.0001,0.00005),
+        (0.0005,0.0005),(0.0002,0.0002),(0.0002,0.0002),(0.0001,0.0001),(0.00005,0.00005),
         # nPOV
         (0.001,0.001),(0.0005,0.0005),(0.0002,0.0001),(0.0001,0.00005),(0.00005,0.000025),
         (0.001,0.001),(0.0005,0.0005),(0.0002,0.0001),(0.0001,0.00005),(0.00005,0.000025),
@@ -58,19 +58,19 @@ compression_ratio = 0.9
 # although this could be slightly adapted to run multiple compression and environments
 # Note that the maximum problem size that is supported in this script is up to 256 as 
 # l1 and l2 values for larger sizes have not been calculated.
-sizes = [16,32,64,128,256]
-problems = itertools.product(["ov"],["rs"],sizes)
+sizes = [256]
+problems = itertools.product(["ndov"],["rs"],sizes)
 
 evals = []
 for c, e, problem_size in problems:
-    change_tolerance = problem_size * 3
+    change_tolerance = problem_size * 2
     # Generate problem and params
     print(c,e,problem_size)
     problem_string = "{}_{}_{}".format(c,e,problem_size)
     problem = ECProblem(problem_size, c, e)
     print("max: {}".format(problem.max_fitness))
     l1_coef, l2_coef = reg_dict[problem_string]
-    pop_size = pop_dict["{}_{}".format(c,problem_size)] * 3
+    pop_size = pop_dict["{}_{}".format(c,problem_size)] * 5
 
     # Create model and population
     device = torch.device("cpu")
