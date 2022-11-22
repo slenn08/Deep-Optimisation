@@ -17,7 +17,7 @@ In the root directory is a series of examples. ec_example.py allows the user to 
 Also included is running the MKP with with the AE and VAE model, which can be used as a base on  how to run DO on more applied problems with this implementation. The MKP instances in this  repository are taken from [2] and are 100 in size. As such, I would recommend running this on the cpu as opposed to the GPU. The scripts are called mkp_DO_example.py and mkp_DOVAE_example.py for the AE and VAE model respectively.
 
 ## QUBO
-QUBO problem instances, ranging from sizes 100, 500, and 1000, are included in this repository. They are easily run by substituting the problem type in the MKP script examples with the QUBO problem type. In this case, it is recommended to use the GPU for problem sizes > 100.
+QUBO problem instances from [3], ranging from sizes 100, 500, and 1000, are included in this repository. They are easily run by substituting the problem type in the MKP script examples with the QUBO problem type. In this case, it is recommended to use the GPU for problem sizes > 100. Approximate maximum fitnesses can also be found in [3], although for some problems these are known to not be global maxima.
 
 # Prerequisites
 The only prerequisites for this project are matplotlib and pytorch. If not already installed, they can be installed by navigating to the root folder of this repository in the command prompt and running `python3 pip install -r requirements.txt`.
