@@ -1,6 +1,5 @@
 import torch
 from torch.utils.data import DataLoader, TensorDataset
-from typing import Tuple
 
 from COProblems.OptimisationProblem import OptimisationProblem
 from Models.DOVAE import DOVAE
@@ -10,7 +9,7 @@ class OptimVAEHandler(OptimHandler):
     """
     Describes the algorithm for carrying out DO with a VAE model.
     """
-    def __init__(self, model: DOVAE, problem: OptimisationProblem, device: str):
+    def __init__(self, model: DOVAE, problem: OptimisationProblem, device: torch.device):
         """
         Constructor method for OptimVAEHandler.
 
@@ -19,6 +18,8 @@ class OptimVAEHandler(OptimHandler):
                 The central VAE model used in Deep Optimisation.
             problem: OptimisationProblem
                 The problem being solved.
+            device: torch.device
+                The device the model and problem are loaded onto.
         """
         super().__init__(model, problem, device)
     
@@ -51,11 +52,10 @@ class OptimVAEHandler(OptimHandler):
                 if print_loss:
                     if (epoch+1) % 10 == 0:
                         print("Epoch {}/{} - {}/{} - Recon = {}".format(epoch+1,epochs,i,len(solutions),loss["recon"].item()))
-        # show_mu_sd(model, x["solution"])
     
     @torch.no_grad()
     def optimise_solutions(self, solutions: torch.Tensor, fitnesses: torch.Tensor,
-                           change_tolerance : int, repair_solutions: bool=False) -> Tuple[torch.Tensor, torch.Tensor, int, bool]:
+                           change_tolerance : int, repair_solutions: bool=False) -> tuple[torch.Tensor, torch.Tensor, int, bool]:
         """
         Optimises the solutions using Model-Informed Variation. 
 

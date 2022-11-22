@@ -1,5 +1,4 @@
 import torch
-from typing import Tuple
 from abc import abstractmethod, ABC
 
 from COProblems.OptimisationProblem import OptimisationProblem
@@ -10,7 +9,7 @@ class OptimHandler(ABC):
     Abstract class to handle the DO algorithm, given a model and a problem. Each handler
     is specific to the model as different model types may require slightly different algorithms.
     """
-    def __init__(self, model : DOBase, problem : OptimisationProblem, device: str = "cpu"):
+    def __init__(self, model : DOBase, problem : OptimisationProblem, device: torch.device):
         """
         Constructor method for the OptimHandler class.
 
@@ -19,9 +18,11 @@ class OptimHandler(ABC):
                 The central model being used for DO.
             problem: OptimisationProblem
                 The combinatorial optimisation problem being solved.
+            device: torch.device
+                The device the model and problem are loaded onto.
         """
-        self.device = torch.device(device)
-        self.model = model.to(device=self.device)
+        self.device = device
+        self.model = model
         self.problem = problem
     
     @abstractmethod
@@ -44,7 +45,7 @@ class OptimHandler(ABC):
 
     @abstractmethod
     def optimise_solutions(self, solutions: torch.Tensor, fitnesses: torch.Tensor, change_tolerance: int,
-                           *args, **kwargs) -> Tuple[torch.Tensor, torch.Tensor, int, bool]:
+                           *args, **kwargs) -> tuple[torch.Tensor, torch.Tensor, int, bool]:
         """
         Optimises the solutions using Model-Informed Variation. 
 
@@ -89,11 +90,12 @@ class OptimHandler(ABC):
                 solution is deemed an optima during the optimisation process.
             last_improve: torch.Tensor
                 A list of numbers containing how many attempts have been made at making a change to 
-                each solution without encountering a positive solution. If the ith element is greater
+                each solution without encountering a positive change. If the ith element is greater
                 than change_tolerance, no more changes shall be made to the ith solution. Has shape N.
         
         Returns:
-            The number of evaluations that have been made during this function call.
+            The number of evaluations that have been made during this function call. Solutions, fitnesses, and 
+            last_improve get modified in-place.
         """
         active = last_improve <= change_tolerance
         new_fitnesses = torch.full(fitnesses.shape, -float('inf'), device=self.device)
@@ -111,7 +113,7 @@ class OptimHandler(ABC):
 
     @torch.no_grad() 
     def hillclimb(self, solutions: torch.Tensor, fitnesses: torch.Tensor,
-                  change_tolerance: int) -> Tuple[torch.Tensor, torch.Tensor, int, bool]:
+                  change_tolerance: int) -> tuple[torch.Tensor, torch.Tensor, int, bool]:
         """
         Locally optimises solutions using a bit-substitution hill climber.
 
@@ -127,9 +129,9 @@ class OptimHandler(ABC):
                 solution is deemed an optima during the optimisation process.
             
         Returns:
-            A list containing the optimised solutions, their respective fitnesses, the number of
+            A tuple containing the optimised solutions, their respective fitnesses, the number of
             evaluations used during the process, and a boolean that is true if one of the solutions
-            is a global optima.
+            is a global optima (if the global optima is known).
         """
         last_improve = torch.zeros_like(fitnesses).to(self.device)
         total_evals = 0
@@ -139,6 +141,7 @@ class OptimHandler(ABC):
             i = torch.randint(0,new_solutions.shape[1], (new_solutions.shape[0],))
             # Flips the selected bits
             new_solutions[torch.arange(new_solutions.shape[0]),i] *= -1
+            #new_solutions = self.problem.repair(new_solutions)
 
             evaluations = self.assess_changes(solutions, fitnesses, new_solutions, change_tolerance,
                                               last_improve)
@@ -147,20 +150,8 @@ class OptimHandler(ABC):
                 return (solutions, fitnesses, total_evals, True)
             if torch.all(last_improve > change_tolerance):
                 return (solutions, fitnesses, total_evals, False)
-    
-    def to_int_list(self, x):
-        """
-        Converts a tensor of floats into a list of 1s and -1s
-        """
-        try:
-            x = torch.sign(x)
-            x = x.tolist()
-            x = [int(i) for i in x]  
-        except TypeError:
-            pass
-        return x
 
-    def generate_population(self, pop_size: int) -> Tuple[torch.Tensor, torch.Tensor]:
+    def generate_population(self, pop_size: int) -> tuple[torch.Tensor, torch.Tensor]:
         """
         Generates a random population to the given problem.
 

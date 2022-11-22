@@ -12,7 +12,7 @@ class OptimAEHandler(OptimHandler):
     "Deep Optimisation: Learning and Searching in Deep Representations of Combinatorial
     Optimisation Problems", Jamie Caldwell.
     """
-    def __init__(self, model: DOAE, problem: OptimisationProblem, device: str):
+    def __init__(self, model: DOAE, problem: OptimisationProblem, device: torch.device):
         """
         Constructor method for OptimAEHandler.
 
@@ -21,6 +21,8 @@ class OptimAEHandler(OptimHandler):
                 The central AE model used in Deep Optimisation.
             problem: OptimisationProblem
                 The problem being solved.
+            device: torch.device
+                The device the model and problem are loaded onto.
         """
         super().__init__(model, problem, device)
     
@@ -80,7 +82,7 @@ class OptimAEHandler(OptimHandler):
                 If true, the Encode method of varying will be used, and the Assign method otherwise.
                 Default False.
             repair_solutions: bool
-                If the problem has a repair method, that can be called after a chance has been done to a solution
+                If the problem has a repair method, that can be called after a change has been done to a solution
                 to ensure that any changes still allows the solutions to be valid.
         
         Returns:

@@ -9,7 +9,7 @@ device="cpu"
 print(device)
 device = torch.device(device)
 
-change_tolerance = 50
+change_tolerance = 100
 problem_size = 100
 pop_size = 100
 problem = MKP("COProblems\\mkp\\problems30d.txt", "COProblems\\mkp\\fitnesses30d.txt", 12, device)
@@ -45,7 +45,7 @@ while True:
     handler.learn_from_population(population, optimizer, l1_coef=l1_coef, batch_size=pop_size)
     print("learnt")
     population, fitnesses, evaluations, done = handler.optimise_solutions(
-        population, fitnesses, change_tolerance, encode=True, repair_solutions=True
+        population, fitnesses, change_tolerance, encode=True, repair_solutions=False
     )
     handler.print_statistics(fitnesses)
     total_eval += evaluations
