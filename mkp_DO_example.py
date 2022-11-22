@@ -7,7 +7,7 @@ from OptimAE import OptimAEHandler
 
 # Highly recommended to keep as cpu for problems of size <= 100
 device = "cuda" if torch.cuda.is_available() else "cpu"
-device = "cpu"
+device="cpu"
 print(device)
 device = torch.device(device)
 
@@ -15,11 +15,16 @@ change_tolerance = 100
 problem_size = 100
 pop_size = 100
 problem = MKP("COProblems\\mkp\\problems30d.txt", "COProblems\\mkp\\fitnesses30d.txt", 12, device)
-#problem = QUBO("COProblems\\qubo\\bqp100.txt", 0, device)
+#problem = QUBO("COProblems\\qubo\\bqp500.txt", 0, device)
 
 dropout_prob = 0.2
+# 1000 bit QUBO l1 and l2:
 # l1_coef = 0.0000025
 # l2_coef = 0.0000025
+# 500 bit QUBO l1 and l2:
+# l1_coef = 0.000005
+# l2_coef = 0.000005
+# 100 bit l1 and l2
 l1_coef = 0.0001
 l2_coef = 0.0001
 lr = 0.002
@@ -29,7 +34,6 @@ hidden_size = problem_size
 handler = OptimAEHandler(model, problem, device)
 
 population, fitnesses = handler.generate_population(pop_size)
-handler.print_statistics(fitnesses)
 population, fitnesses, _, _ = handler.hillclimb(population, fitnesses, change_tolerance)
 handler.print_statistics(fitnesses)
 

@@ -119,13 +119,7 @@ def Fr(solutions: torch.Tensor) -> torch.Tensor:
     Returns:
         A fitness tensor where each element i is the number of partial solutions in solution i.
     """
-    fitnesses = torch.zeros((solutions.shape[0],))
-    for i, s in enumerate(solutions):
-        total = 0
-        for module in s.view(-1,2):
-            if 0 not in module:
-                total += 1
-        fitnesses[i] = total
+    fitnesses = torch.sum(~((solutions[:,::2] == 0) | (solutions[:,1::2] == 0)), axis=1, dtype=torch.float32)
     return fitnesses
 
 def compression_mapping(s: torch.Tensor, ps1: torch.Tensor, ps2: torch.Tensor, ps3: torch.Tensor, 
@@ -176,23 +170,11 @@ def GC(solutions: torch.Tensor, compression) -> torch.Tensor:
     # m = size/4
     m = compressed.shape[1] / 2
 
-    for i,solutions in enumerate(compressed):
-        Hr1 = 0
-        Hr2 = 0
-        null_present_r1 = False
-        null_present_r2 = False
-        for r in solutions.view(-1,2):
-            if r[0] == 1:
-                Hr1 += 1
-            if r[1] == 1:
-                Hr2 += 1
-            if r[0] == 0:
-                null_present_r1 = True
-            if r[1] == 0:
-                null_present_r2 = True
-        r1_score = 0 if null_present_r1 else abs(Hr1 - (m/2))
-        r2_score = 0 if null_present_r2 else abs(Hr2 - (m/2))
-        fitnesses[i] += r1_score + r2_score
+    r1 = compressed[:,::2]
+    r2 = compressed[:,1::2]
+    r1_score = torch.where(torch.all(r1!=0, dim=1), abs((r1==1).sum(dim=1) - (m/2)), 0) 
+    r2_score = torch.where(torch.all(r2!=0, dim=1), abs((r2==1).sum(dim=1) - (m/2)), 0) 
+    fitnesses += r1_score + r2_score
     
     return fitnesses
 
@@ -233,13 +215,10 @@ def HGC(solutions: torch.Tensor, compression, linkages: list[list[int]]) -> torc
     compressed = compression(solutions)
     fitnesses = Fr(compressed)
     for linkage in linkages:
-        new_solutions = torch.zeros((compressed.shape[0], compressed.shape[1]//2))
-        for i, s in enumerate(compressed):
-            compared_r1 = s[linkage[0::2]]
-            compared_r2 = s[linkage[1::2]]
-            new_s = torch.where(compared_r1 == compared_r2, compared_r1, torch.zeros_like(compared_r1))
-            fitnesses[i] += new_s[new_s != 0].shape[0]
-            new_solutions[i] = new_s
+        compared_r1 = compressed[:,linkage[0::2]]
+        compared_r2 = compressed[:,linkage[1::2]]
+        new_solutions = torch.where(compared_r1 == compared_r2, compared_r1, 0)
+        fitnesses += (new_solutions != 0).sum(dim=1)
         compressed = new_solutions
     return fitnesses
 
@@ -299,16 +278,11 @@ def RS(solutions: torch.Tensor, compression, up: torch.Tensor) -> torch.Tensor:
     compressed = compression(solutions)
     fitnesses = Fr(compressed)
     null_present = False
-    for i, s in enumerate(compressed):
-        x = 0
-        y = 0
-        for r in s.view(-1, 2):
-            if r[0] == 1:
-                x += 1
-            if r[1] == 1:
-                y += 1
-            if 0 in r:
-                null_present = True
-        if not null_present:
-            fitnesses[i] += up[y][x]
+
+    r1 = compressed[:,::2]
+    r2 = compressed[:,1::2]
+    xs = (r1 == 1).sum(dim=1)
+    ys = (r2 == 1).sum(dim=1)
+    up_f = up[ys,xs]
+    fitnesses += torch.where(torch.all((r1 != 0) & (r2 != 0)), up_f, 0)
     return fitnesses
