@@ -10,17 +10,17 @@ device = "cuda" if torch.cuda.is_available() else "cpu"
 print(device)
 device = torch.device(device)
 
-change_tolerance = 100
-problem_size = 100
-pop_size = 100
-problem = MKP("COProblems\\mkp\\problems30d.txt", "COProblems\\mkp\\fitnesses30d.txt", 12, device)
-#problem = QUBO("COProblems\\qubo\\bqp100.txt", 0, device)
+change_tolerance = 500
+problem_size = 1000
+pop_size = 750
+#problem = MKP("COProblems\\mkp\\problems30d.txt", "COProblems\\mkp\\fitnesses30d.txt", 12, device)
+problem = QUBO("COProblems\\qubo\\bqp1000.txt", 0, device)
 
 dropout_prob = 0.2
-# l1_coef = 0.0000025
-# l2_coef = 0.0000025
-l1_coef = 0.0001
-l2_coef = 0.0001
+l1_coef = 0.0000025
+l2_coef = 0.0000025
+#l1_coef = 0.0001
+#l2_coef = 0.0001
 lr = 0.002
 compression_ratio = 0.8
 model = DOAE(problem_size, dropout_prob, device)
@@ -46,7 +46,7 @@ while True:
     handler.learn_from_population(population, optimizer, l1_coef=l1_coef, batch_size=pop_size)
     print("learnt")
     population, fitnesses, evaluations, done = handler.optimise_solutions(
-        population, fitnesses, change_tolerance, encode=True, repair_solutions=False
+        population, fitnesses, change_tolerance, encode=True, repair_solutions=True, deepest_only=False
     )
     handler.print_statistics(fitnesses)
     total_eval += evaluations

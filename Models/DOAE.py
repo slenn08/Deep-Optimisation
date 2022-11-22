@@ -1,9 +1,8 @@
 import torch
 import torch.nn.functional as F
-
 from torch import nn
 
-from .DOBase import DOBase
+from Models.DOBase import DOBase
 
 class DOAE(DOBase):
     """
@@ -80,9 +79,9 @@ class DOAE(DOBase):
             The latent points decoded back into the solution space, of size n x W where W is the 
             size of the solution space.
         """
-        z = self.encoder[1+(2*layer):](z)
-        return self.decoder(z)
-        #return self.decoder[(self.num_layers-layer-1)*2:](z)
+        # z = self.encoder[1+(2*layer):](z)
+        # return self.decoder(z)
+        return self.decoder[(self.num_layers-layer-1)*2:](z)
     
     def encode_step(self, x: torch.Tensor, layer: int) -> torch.Tensor:
         """

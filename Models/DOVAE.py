@@ -3,7 +3,7 @@ from torch import nn
 from torch.nn.utils import weight_norm
 import torch.nn.functional as F
 
-from .DOBase import DOBase
+from Models.DOBase import DOBase
 
 class DOVAE(DOBase):
     """

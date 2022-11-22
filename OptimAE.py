@@ -1,6 +1,5 @@
 import torch
 from torch.utils.data import DataLoader, TensorDataset
-from typing import Tuple
 
 from COProblems.OptimisationProblem import OptimisationProblem
 from Models.DOAE import DOAE
@@ -64,7 +63,7 @@ class OptimAEHandler(OptimHandler):
     @torch.no_grad()
     def optimise_solutions(self, solutions: torch.Tensor, fitnesses: torch.Tensor,
                            change_tolerance : int, encode: bool=False,
-                           repair_solutions: bool=False) -> Tuple[torch.Tensor, torch.Tensor, int, bool]:
+                           repair_solutions: bool=False, deepest_only: bool=False) -> tuple[torch.Tensor, torch.Tensor, int, bool]:
         """
         Optimises the solutions using Model-Informed Variation. 
 
@@ -84,6 +83,9 @@ class OptimAEHandler(OptimHandler):
             repair_solutions: bool
                 If the problem has a repair method, that can be called after a change has been done to a solution
                 to ensure that any changes still allows the solutions to be valid.
+            deepest_only: bool
+                If true, optimisation occurs at the deepest layer of the autoencoder only. If False, optimisation
+                will occur at all levels of the autoencoder.
         
         Returns:
             A list containing the optimised solutions, their respective fitnesses, the number of
@@ -92,12 +94,14 @@ class OptimAEHandler(OptimHandler):
         """
         self.model.eval()
         evaluations = 0
-        for layer in range(self.model.num_layers-1, 0, -1):
-        #for layer in [self.model.num_layers-1, 0]:
+        layers = [self.model.num_layers-1] if deepest_only else range(self.model.num_layers-1, 0, -1)
+        for layer in layers:
+            old_fitnesses = fitnesses.clone().detach()
             last_improve = torch.zeros_like(fitnesses, device=self.device)
 
             while True:
                 new_solutions = self.model.vary(solutions, layer, encode)
+
                 if repair_solutions:
                     new_solutions = self.problem.repair(new_solutions)
                 evaluations += self.assess_changes(solutions, fitnesses, new_solutions,
@@ -106,5 +110,6 @@ class OptimAEHandler(OptimHandler):
                     return (solutions, fitnesses, evaluations, True)
                 if torch.all(last_improve > change_tolerance):
                     break   
+            print("Layer {} caused fitness increase of {}".format(layer, (fitnesses-old_fitnesses).mean()))
 
         return (solutions, fitnesses, evaluations, False)

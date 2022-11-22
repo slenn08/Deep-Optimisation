@@ -1,7 +1,7 @@
+from abc import abstractmethod, ABC
+
 import torch
 from torch import nn
-
-from abc import abstractmethod, ABC
 
 class DOBase(nn.Module, ABC):
     """

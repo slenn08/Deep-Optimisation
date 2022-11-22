@@ -1,11 +1,10 @@
 import itertools
 
-from OptimVAE import OptimVAEHandler
-from Models.DOVAE import DOVAE
 import torch
-
 from matplotlib import pyplot as plt
 
+from OptimVAE import OptimVAEHandler
+from Models.DOVAE import DOVAE
 from COProblems.ECProblem import ECProblem
 from Models.DOAE import DOAE
 from OptimAE import OptimAEHandler
@@ -58,8 +57,8 @@ compression_ratio = 0.9
 # although this could be slightly adapted to run multiple compression and environments
 # Note that the maximum problem size that is supported in this script is up to 256 as 
 # l1 and l2 values for larger sizes have not been calculated.
-sizes = [256]
-problems = itertools.product(["ndov"],["rs"],sizes)
+sizes = [16,32,64,128,256]
+problems = itertools.product(["ndov"],["hgc"],sizes)
 
 evals = []
 for c, e, problem_size in problems:

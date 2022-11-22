@@ -1,7 +1,8 @@
 import torch
 
-from .OptimisationProblem import OptimisationProblem
-from . import QUBO_populate_function
+from COProblems import QUBO_populate_function
+from COProblems.OptimisationProblem import OptimisationProblem
+
 
 class QUBO(OptimisationProblem):
     """

@@ -1,6 +1,8 @@
-from .OptimisationProblem import OptimisationProblem
-import torch
 import random
+
+import torch
+
+from COProblems.OptimisationProblem import OptimisationProblem
 
 class ECProblem(OptimisationProblem):
     def __init__(self, size: int, compression: str, environment: str, linkages: list[list[int]]=None):

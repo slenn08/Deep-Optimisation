@@ -1,7 +1,7 @@
 import torch
 
-from .OptimisationProblem import OptimisationProblem
-from . import MKP_populate_function as mkp
+from COProblems import MKP_populate_function as mkp
+from COProblems.OptimisationProblem import OptimisationProblem
 
 class MKP(OptimisationProblem):
     """

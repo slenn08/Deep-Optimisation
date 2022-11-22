@@ -1,5 +1,6 @@
-import torch
 from abc import abstractmethod, ABC
+
+import torch
 
 from COProblems.OptimisationProblem import OptimisationProblem
 from Models.DOBase import DOBase
