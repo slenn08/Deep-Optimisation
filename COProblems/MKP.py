@@ -29,9 +29,9 @@ class MKP(OptimisationProblem):
         # b = knapsack size in each dimension
         super().__init__(device)
         self.c, self.A, self.b = mkp.MKPpopulate(file, id)
-        self.c = torch.from_numpy(self.c).to(dtype=torch.float32, device=device)
-        self.A = torch.from_numpy(self.A).to(dtype=torch.float32, device=device)
-        self.b = torch.from_numpy(self.b).to(dtype=torch.float32, device=device)
+        self.c = self.c.to(dtype=torch.float32, device=device)
+        self.A = self.A.to(dtype=torch.float32, device=device)
+        self.b = self.b.to(dtype=torch.float32, device=device)
         self.utility = self.get_utility_order()
         self.max_fitness = mkp.MKPFitness(max_fitness_file, id)
         print(self.max_fitness)

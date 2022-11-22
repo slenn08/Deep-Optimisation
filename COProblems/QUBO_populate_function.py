@@ -1,6 +1,6 @@
-import numpy as np
+import torch
 
-def QUBOpopulate(name: str, id: int) -> np.ndarray:
+def QUBOpopulate(name: str, id: int) -> torch.Tensor:
     """
     This function extracts the raw data from a .txt file and populates the Q matrix of the
     problem instance
@@ -35,7 +35,7 @@ def QUBOpopulate(name: str, id: int) -> np.ndarray:
         cur_id += 1
     size = int(x[i])
     entries = int(x[i + 1])
-    Q = np.zeros((size, size))
+    Q = torch.zeros((size, size))
     i += 2
     for _ in range(entries):
         m = int(x[i]) - 1

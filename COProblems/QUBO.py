@@ -20,7 +20,7 @@ class QUBO(OptimisationProblem):
                 The device that the problem is run on.
         """
         self.Q = QUBO_populate_function.QUBOpopulate(file, id)
-        self.Q = torch.from_numpy(self.Q).to(dtype=torch.float32, device=device)
+        self.Q = self.Q.to(dtype=torch.float32, device=device)
         super().__init__(device)
 
     def fitness(self, x: torch.Tensor) -> torch.Tensor:

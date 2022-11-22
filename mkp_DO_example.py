@@ -1,11 +1,12 @@
 import torch
 
 from COProblems.MKP import MKP
+from COProblems.QUBO import QUBO
 from Models.DOAE import DOAE
 from OptimAE import OptimAEHandler
 
 device = "cuda" if torch.cuda.is_available() else "cpu"
-device="cpu"
+#device="cpu"
 print(device)
 device = torch.device(device)
 
@@ -13,7 +14,7 @@ change_tolerance = 100
 problem_size = 100
 pop_size = 100
 problem = MKP("COProblems\\mkp\\problems30d.txt", "COProblems\\mkp\\fitnesses30d.txt", 12, device)
-#problem = QUBO("COProblems\\qubo\\bqp1000.txt", 0)
+#problem = QUBO("COProblems\\qubo\\bqp100.txt", 0, device)
 
 dropout_prob = 0.2
 # l1_coef = 0.0000025

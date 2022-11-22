@@ -1,7 +1,6 @@
-from typing import Tuple
-import numpy as np
+import torch
 
-def MKPpopulate(name: str, id: int) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
+def MKPpopulate(name: str, id: int) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
     """
     Extracts the raw data from a .txt file and populates the objective function coefficients
     array, the constraints coefficients matrix and the knapsack capacity array.
@@ -40,14 +39,14 @@ def MKPpopulate(name: str, id: int) -> Tuple[np.ndarray, np.ndarray, np.ndarray]
     num_rows = int(x.pop(i))
     best = int(x.pop(i))
     # Populating Objective Function Coefficients
-    c = np.array([float(x.pop(i)) for _ in range(num_columns)])
+    c = torch.Tensor([float(x.pop(i)) for _ in range(num_columns)])
     
     # Populating A matrix (size NumRows * NumColumns)
-    const_coef = np.array([float(x.pop(i)) for _ in range(int(num_rows * num_columns))])           
-    A = np.reshape(const_coef, (num_rows, num_columns)) # reshaping the 1-d ConstCoef into A    
+    const_coef = torch.Tensor([float(x.pop(i)) for _ in range(int(num_rows * num_columns))])           
+    A = torch.reshape(const_coef, (num_rows, num_columns)) # reshaping the 1-d ConstCoef into A    
         
     # Populating the RHS
-    b = np.array([float(x.pop(i)) for _ in range(int(num_rows))])
+    b = torch.Tensor([float(x.pop(i)) for _ in range(int(num_rows))])
 
     print("This instance has {} items and {} dimensions".format(num_columns, num_rows))
     return (c, A, b)
