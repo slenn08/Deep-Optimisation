@@ -37,7 +37,7 @@ regs = [
         (0.0005,0.0001),(0.0005,0.0001),(0.0002,0.0001),(0.0001,0.00005),(0.00005,0.000025)
        ]
 
-# The populations used NOTE RS may require a higher population than GC and HGC, up to 3x or 5x
+# The populations used NOTE RS may require a higher population than GC and HGC, up to 7x
 populations = [#16,32,64,128,256 bits
                32,32,32,32,32,      #nOV
                32,64,64,64,64,      #OV  
@@ -58,7 +58,7 @@ device = torch.device("cpu")
 # Note that the maximum problem size that is supported in this script is up to 256 as 
 # l1 and l2 values for larger sizes have not been calculated.
 sizes = [16,32,64,128,256]
-problems = itertools.product(["npov"],["hgc"],sizes)
+problems = itertools.product(["nov"],["gc"],sizes)
 
 evals = []
 for c, e, problem_size in problems:
