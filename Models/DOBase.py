@@ -1,4 +1,3 @@
-from typing import List
 import torch
 from torch import nn
 
@@ -9,16 +8,16 @@ class DOBase(nn.Module, ABC):
     Superclass used to define a model used for Deep Optimisation.
 
     Outlines several methods that such a model needs to have, such as encoding, decoding,
-    varying solutions, and transitioning into a higher layer.
+    varying solutions, and transitioning.
     """
 
     def __init__(self, *args, **kwargs):
         super().__init__()
 
     @abstractmethod
-    def forward(self, x: torch.Tensor, *args, **kwargs) -> List[torch.Tensor]:
+    def forward(self, x: torch.Tensor, *args, **kwargs) -> list[torch.Tensor]:
         """
-        Passes am input through the encoder and also decodes it into a reconstruction
+        Passes an input through the encoder and also decodes it into a reconstruction
         of the input.
 
         Args:
@@ -27,7 +26,7 @@ class DOBase(nn.Module, ABC):
         
         Returns:
             A list of tensors, where each one relates to a relevant value outputted by
-            the model (the end output should be included in this).
+            the model (the end reconstruction should be included in this).
         """
         pass
 

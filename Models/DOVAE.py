@@ -1,4 +1,3 @@
-from typing import List
 import torch
 from torch import nn
 from torch.nn.utils import weight_norm
@@ -13,7 +12,7 @@ class DOVAE(DOBase):
     """
     def __init__(self, input_size: int, hidden_size: int, device: torch.device):
         """
-        Constructor method for the VAE. All layers of the model start of as empty, and
+        Constructor method for the VAE. All layers of the model start off as empty, and
         will be set and reset during the transition method.
 
         Args:   
@@ -21,6 +20,8 @@ class DOVAE(DOBase):
                 The size of each problem solution.
             hidden_size: int
                 The dimensions of the latent space.
+            device: torch.device
+                The device the model is loaded onto.
         """
         super().__init__()
         self.mean_layer = None
@@ -30,7 +31,7 @@ class DOVAE(DOBase):
         self.hidden_size = hidden_size
         self.device = device
     
-    def encode(self, x: torch.Tensor) -> List[torch.Tensor]:
+    def encode(self, x: torch.Tensor) -> list[torch.Tensor]:
         """
         Encodes points into the solution space into a latent distribution.
 
@@ -67,7 +68,7 @@ class DOVAE(DOBase):
         eps = torch.randn_like(std, device=self.device)
         return mu + eps*std
 
-    def forward(self, x: torch.Tensor) -> List[torch.Tensor]:
+    def forward(self, x: torch.Tensor) -> list[torch.Tensor]:
         """
         Passes solutions through the network to produce an output.
 
@@ -83,7 +84,7 @@ class DOVAE(DOBase):
         """
         mu, logvar = self.encode(x)
         z = self.reparameterize(mu, logvar)
-        return [self.decoder(z), mu, logvar, z]
+        return [self.decode(z), mu, logvar, z]
 
     def decode(self, z: torch.Tensor) -> torch.Tensor:
         """
@@ -138,7 +139,8 @@ class DOVAE(DOBase):
         called after Model-Informed Variation has been applied to the solutions.
         """
         self.mean_layer = weight_norm(nn.Linear(self.input_size, self.hidden_size, device=self.device), name='weight')
-        self.logvar_layer = weight_norm(nn.Linear(self.input_size, self.hidden_size, device=self.device), name='weight')      
+        self.logvar_layer = weight_norm(nn.Linear(self.input_size, self.hidden_size, device=self.device), name='weight')
+              
         decoder_layer = weight_norm(nn.Linear(self.hidden_size, self.input_size), name='weight')
         self.decoder = nn.Sequential(decoder_layer,nn.Tanh()).to(device=self.device)
     
