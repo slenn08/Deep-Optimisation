@@ -110,6 +110,5 @@ class OptimAEHandler(OptimHandler):
                     return (solutions, fitnesses, evaluations, True)
                 if torch.all(last_improve > change_tolerance):
                     break   
-            print("Layer {} caused fitness increase of {}".format(layer, (fitnesses-old_fitnesses).mean()))
 
         return (solutions, fitnesses, evaluations, False)

@@ -142,7 +142,6 @@ class OptimHandler(ABC):
             i = torch.randint(0,new_solutions.shape[1], (new_solutions.shape[0],))
             # Flips the selected bits
             new_solutions[torch.arange(new_solutions.shape[0]),i] *= -1
-            #new_solutions = self.problem.repair(new_solutions)
 
             evaluations = self.assess_changes(solutions, fitnesses, new_solutions, change_tolerance,
                                               last_improve)
@@ -179,4 +178,4 @@ class OptimHandler(ABC):
         mean_f = torch.mean(fitnesses).item()  
         max_f = torch.max(fitnesses).item()
 
-        print("Max : {}, Mean : {}".format(max_f, mean_f))     
+        print("Max pop fitness: {}, Mean pop fitness : {}".format(max_f, mean_f))     

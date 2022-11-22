@@ -34,7 +34,7 @@ class MKP(OptimisationProblem):
         self.b = self.b.to(dtype=torch.float32, device=device)
         self.utility = self.get_utility_order()
         self.max_fitness = mkp.MKPFitness(max_fitness_file, id)
-        print(self.max_fitness)
+        print("Max possible fitness for this instance: {}".format(self.max_fitness))
 
     def fitness(self, x: torch.Tensor) -> torch.Tensor:
         """

@@ -5,20 +5,20 @@ from COProblems.QUBO import QUBO
 from Models.DOVAE import DOVAE
 from OptimVAE import OptimVAEHandler
 
+# Highly recommended to keep as cpu for problems of size <= 100
 device = "cuda" if torch.cuda.is_available() else "cpu"
 #device="cpu"
 print(device)
 device = torch.device(device)
 
-change_tolerance = 50
+change_tolerance = 100
 problem_size = 100
 pop_size = 100
-problem = MKP("COProblems\\mkp\\problems30d.txt", "COProblems\\mkp\\fitnesses30d.txt", 22, device=device)
-#problem = QUBO("COProblems\\qubo\\bqp1000n.txt", 5, device=device)
+#problem = MKP("COProblems\\mkp\\problems30d.txt", "COProblems\\mkp\\fitnesses30d.txt", 22, device=device)
+problem = QUBO("COProblems\\qubo\\bqp1000.txt", 0, device=device)
 print("Max fitness: {}".format(problem.max_fitness))
 
 lr = 0.002
-batch_size = 750
 compression_ratio = 0.8
 model = DOVAE(problem_size, round(compression_ratio * pop_size), device)
 handler = OptimVAEHandler(model, problem, device)
@@ -36,7 +36,9 @@ while True:
     model.transition()
     optimizer = torch.optim.Adam(model.parameters(), lr=lr)
     print("learning")
-    handler.learn_from_population(population, optimizer, batch_size=batch_size)
+    # Learing with the entire population as a batch is technically not the best from a machine learning perspective,
+    # but does not seem to have a massive impact on solution quality whilst also increasing learning speed significantly.
+    handler.learn_from_population(population, optimizer, batch_size=pop_size)
     print("learnt")
     population, fitnesses, evaluations, done = handler.optimise_solutions(
         population, fitnesses, change_tolerance, repair_solutions=True
