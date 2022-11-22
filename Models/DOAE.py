@@ -1,10 +1,8 @@
-from typing import List
 import torch
 import torch.nn.functional as F
-
 from torch import nn
 
-from .DOBase import DOBase
+from Models.DOBase import DOBase
 
 class DOAE(DOBase):
     """
@@ -12,7 +10,7 @@ class DOAE(DOBase):
     Searching in Deep Representations of Combinatorial Optimisation Problems", Jamie
     Caldwell.
     """
-    def __init__(self, input_size: int, dropout_prob: float):
+    def __init__(self, input_size: int, dropout_prob: float, device: torch.device):
         """
         Constructor method for the AE. The encoder and decoder start of as empty models, as 
         layers get added to them during subsequent transitions.
@@ -22,14 +20,17 @@ class DOAE(DOBase):
                 The size of the solutions in a given combinatorial optimisation problem.
             dropout_prob: float
                 The amount of dropout that occurs in the input to the model.
+            device: torch.device
+                The device the model is loadeded onto.
         """
         super().__init__()
         self.encoder = nn.Sequential(nn.Dropout(dropout_prob))
         self.decoder = nn.Sequential()
+        self.device = device
         self.input_size = input_size   
         self.num_layers = 1
     
-    def forward(self, x: torch.Tensor) -> List[torch.Tensor]:
+    def forward(self, x: torch.Tensor) -> list[torch.Tensor]:
         """
         Passes the input through a deterministic decoder.
 
@@ -40,7 +41,7 @@ class DOAE(DOBase):
 
         Returns:
             A list containing the reconstruction of the input of size n x W, and the latent point
-            calculated from the input, of size n x L where L is the size of the deepest latent
+            calculated from the input of size n x L where L is the size of the deepest latent
             space.
         """
         z = self.encoder(x)
@@ -55,7 +56,7 @@ class DOAE(DOBase):
                 The input of shape n x W, where n is the number of solutions being passed
                 through and W is the size of each solution.
             layer: int
-                The deepest layer the latent space is calculated up to.
+                The layer number of the hidden layer used to calculate a latent representation.
         
         Returns:
             The generated latent space at the specified layer of size n x L where L is the size
@@ -80,7 +81,7 @@ class DOAE(DOBase):
         """
         z = self.encoder[1+(2*layer):](z)
         return self.decoder(z)
-        # return self.decoder[(self.num_layers-layer-1)*2:](z)
+        #return self.decoder[(self.num_layers-layer-1)*2:](z)
     
     def encode_step(self, x: torch.Tensor, layer: int) -> torch.Tensor:
         """
@@ -109,7 +110,7 @@ class DOAE(DOBase):
         dh = hs - h
         a = torch.mean(torch.abs(dh), dim=1)
         z, _ = torch.max(torch.abs(dh), dim=1)
-        t = a + (z - a) * torch.rand(a.shape)
+        t = a + (z - a) * torch.rand(a.shape, device=self.device)
 
         # transposes are needed to ensure gt is carried out across rows
         dh = torch.where((torch.abs(dh).T > t).T, torch.sign(dh) - h, torch.zeros_like(dh))
@@ -140,8 +141,8 @@ class DOAE(DOBase):
         if not encode:
             i = torch.randint(0,hidden_repr.shape[1], (hidden_repr.shape[0],))
             # Provides values of either 1 or -1
-            new_activations = torch.randint(0,2,i.shape,dtype=torch.float32) * 2 - 1
-            new_hidden_repr[torch.arange(hidden_repr.shape[0]),i] = new_activations
+            new_activations = torch.randint(0, 2, i.shape, dtype=torch.float32, device=self.device) * 2 - 1
+            new_hidden_repr[torch.arange(hidden_repr.shape[0]), i] = new_activations
         else:
             d_h = self.encode_step(x, layer)
             new_hidden_repr += d_h
@@ -171,13 +172,13 @@ class DOAE(DOBase):
         weight = torch.zeros((hidden_size, prev_size))
         nn.init.uniform_(weight, -0.01, 0.01)
 
-        encoder_layer = nn.Linear(prev_size, hidden_size)
+        encoder_layer = nn.Linear(prev_size, hidden_size, device=self.device)
         encoder_layer.weight = nn.Parameter(weight)
         decoder_layer = nn.Linear(hidden_size, prev_size)
         decoder_layer.weight = nn.Parameter(weight.transpose(0,1))
 
-        self.encoder = nn.Sequential(*(list(self.encoder) + [encoder_layer,nn.Tanh()]))
-        self.decoder = nn.Sequential(*([decoder_layer,nn.Tanh()] + list(self.decoder)))
+        self.encoder = nn.Sequential(*(list(self.encoder) + [encoder_layer,nn.Tanh()])).to(device=self.device)
+        self.decoder = nn.Sequential(*([decoder_layer,nn.Tanh()] + list(self.decoder))).to(device=self.device)
 
         self.num_layers += 1
     

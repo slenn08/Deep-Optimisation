@@ -1,10 +1,9 @@
-from typing import Tuple
-import numpy as np
+import torch
 
-def MKPpopulate(name: str, id: int) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
+def MKPpopulate(name: str, id: int) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
     """
-    This function extracts the raw data from a .txt file and populates the objective function coefficients
-    array, the constraints coefficients matrix A and the right hand side b array
+    Extracts the raw data from a .txt file and populates the objective function coefficients
+    array, the constraints coefficients matrix and the knapsack capacity array.
     
     Arguments:
         name: str
@@ -13,9 +12,9 @@ def MKPpopulate(name: str, id: int) -> Tuple[np.ndarray, np.ndarray, np.ndarray]
             the id of the problem, starting from 0.
         
     returns:
-        c - item values array (shape = 1 * n)
+        c - item values array (shape = n)
         A - item weights in each dimension (shape = m * n)
-        b - knapsack capacity in each dimension (shape = 1 * m)
+        b - knapsack capacity in each dimension (shape = m)
         Where n is the number of available items and m is the number of dimensions.
     """
     
@@ -27,21 +26,27 @@ def MKPpopulate(name: str, id: int) -> Tuple[np.ndarray, np.ndarray, np.ndarray]
         for i in range(len(split_line)):
             x.append(split_line[i])
     file.close()
-
+ 
     # Define parameters
-    num_problems = int(x.pop(0))
-    for _ in range(id + 1):
-        num_columns, num_rows, best = int(x.pop(0)), int(x.pop(0)), float(x.pop(0))
+    i = 1
+    cur_id = 0
+    while cur_id < id:
+        num_columns = int(x[i])
+        num_rows = int(x[i+1])
+        i += num_columns + (num_columns*num_rows) + num_rows + 3
+        cur_id += 1
+    num_columns = int(x.pop(i))
+    num_rows = int(x.pop(i))
+    best = int(x.pop(i))
+    # Populating Objective Function Coefficients
+    c = torch.Tensor([float(x.pop(i)) for _ in range(num_columns)])
+    
+    # Populating A matrix (size NumRows * NumColumns)
+    const_coef = torch.Tensor([float(x.pop(i)) for _ in range(int(num_rows * num_columns))])           
+    A = torch.reshape(const_coef, (num_rows, num_columns)) # reshaping the 1-d ConstCoef into A    
         
-        # Populating Objective Function Coefficients
-        c = np.array([float(x.pop(0)) for _ in range(num_columns)])
-        
-        # Populating A matrix (size NumRows * NumColumns)
-        const_coef = np.array([float(x.pop(0)) for _ in range(int(num_rows * num_columns))])           
-        A = np.reshape(const_coef, (num_rows, num_columns)) # reshaping the 1-d ConstCoef into A    
-            
-        # Populating the RHS
-        b = np.array([float(x.pop(0)) for i in range(int(num_rows))])
+    # Populating the RHS
+    b = torch.Tensor([float(x.pop(i)) for _ in range(int(num_rows))])
 
     print("This instance has {} items and {} dimensions".format(num_columns, num_rows))
     return (c, A, b)

@@ -1,6 +1,5 @@
 import torch
 from torch.utils.data import DataLoader, TensorDataset
-from typing import Tuple
 
 from COProblems.OptimisationProblem import OptimisationProblem
 from Models.DOAE import DOAE
@@ -12,7 +11,7 @@ class OptimAEHandler(OptimHandler):
     "Deep Optimisation: Learning and Searching in Deep Representations of Combinatorial
     Optimisation Problems", Jamie Caldwell.
     """
-    def __init__(self, model: DOAE, problem: OptimisationProblem):
+    def __init__(self, model: DOAE, problem: OptimisationProblem, device: torch.device):
         """
         Constructor method for OptimAEHandler.
 
@@ -21,8 +20,10 @@ class OptimAEHandler(OptimHandler):
                 The central AE model used in Deep Optimisation.
             problem: OptimisationProblem
                 The problem being solved.
+            device: torch.device
+                The device the model and problem are loaded onto.
         """
-        super().__init__(model, problem)
+        super().__init__(model, problem, device)
     
     def learn_from_population(self, solutions: torch.Tensor, optimizer: torch.optim.Optimizer,
                               l1_coef: float = 0.0, batch_size: int = 16, epochs: int = 400, 
@@ -47,8 +48,8 @@ class OptimAEHandler(OptimHandler):
                 outputted.
         """
         total_recon = 0
+        dataset = DataLoader(TensorDataset(solutions), batch_size=batch_size, shuffle=True)
         for epoch in range(epochs):
-            dataset = DataLoader(TensorDataset(solutions), batch_size=batch_size, shuffle=True)
             for i,x in enumerate(dataset):
                 loss = self.model.learn_from_sample(x[0], optimizer, l1_coef)
                 total_recon += loss["recon"]
@@ -61,7 +62,8 @@ class OptimAEHandler(OptimHandler):
 
     @torch.no_grad()
     def optimise_solutions(self, solutions: torch.Tensor, fitnesses: torch.Tensor,
-                           change_tolerance : int, encode=False) -> Tuple[torch.Tensor, torch.Tensor, int, bool]:
+                           change_tolerance : int, encode: bool=False,
+                           repair_solutions: bool=False, deepest_only: bool=False) -> tuple[torch.Tensor, torch.Tensor, int, bool]:
         """
         Optimises the solutions using Model-Informed Variation. 
 
@@ -78,6 +80,12 @@ class OptimAEHandler(OptimHandler):
             encode: bool
                 If true, the Encode method of varying will be used, and the Assign method otherwise.
                 Default False.
+            repair_solutions: bool
+                If the problem has a repair method, that can be called after a change has been done to a solution
+                to ensure that any changes still allows the solutions to be valid.
+            deepest_only: bool
+                If true, optimisation occurs at the deepest layer of the autoencoder only. If False, optimisation
+                will occur at all levels of the autoencoder.
         
         Returns:
             A list containing the optimised solutions, their respective fitnesses, the number of
@@ -86,13 +94,18 @@ class OptimAEHandler(OptimHandler):
         """
         self.model.eval()
         evaluations = 0
-        for layer in range(self.model.num_layers-1, 0, -1):
-            last_improve = torch.zeros_like(fitnesses)
+        layers = [self.model.num_layers-1] if deepest_only else range(self.model.num_layers-1, 0, -1)
+        for layer in layers:
+            old_fitnesses = fitnesses.clone().detach()
+            last_improve = torch.zeros_like(fitnesses, device=self.device)
 
             while True:
                 new_solutions = self.model.vary(solutions, layer, encode)
+
+                if repair_solutions:
+                    new_solutions = self.problem.repair(new_solutions)
                 evaluations += self.assess_changes(solutions, fitnesses, new_solutions,
-                                                  change_tolerance, last_improve)
+                                                   change_tolerance, last_improve)
                 if torch.any(fitnesses == self.problem.max_fitness): 
                     return (solutions, fitnesses, evaluations, True)
                 if torch.all(last_improve > change_tolerance):
