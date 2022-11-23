@@ -1,5 +1,5 @@
 # Introduction
-This project is a reimplementation of Deep Optimisation. Included is the original AE model used in Jamie Caldwell's thesis [1], as well as a shallow version of DO with a VAE to show how different models may be implemented. 
+This project is a reimplementation of Deep Optimisation. Included is the original AE model used in Jamie Caldwell's thesis [1], as well as a shallow version of DO with a VAE to show how different models may be implemented. For more details on Deep Optimisation see [4], [5], [6], [7].
 
 # Project Structure
 Inside the "Models" directory is an abstract class, DOBase, which defines how a model for DO should be implemented, as well as the deep AE model and shallow VAE model. These define behaviours such as transitioning, varying solutions, etc.
@@ -31,3 +31,11 @@ If there are any issues or questions feel free to contact me via email at sl2g19
 [2] Paul C Chu and John E Beasley (1998). A genetic algorithm for the multidimensional knapsack problem. Journal of heuristics, 4(1):63–86
 
 [3] John E Beasley (1999). Heuristic Algorithms for the Unconstrained Binary Quadratic Programming Problem
+
+[4] Caldwell, J., Knowles, J., Thies, C., Kubacki, F., & Watson, R. (2022). Deep Optimisation: Transitioning the Scale of Evolutionary Search by Inducing and Searching in Deep Representations. SN Computer Science, 3(3), 1-26.
+
+[5] Caldwell, J., Knowles, J., Thies, C., Kubacki, F., & Watson, R. (2021, April). Deep optimisation: multi-scale evolution by inducing and searching in deep representations. In International Conference on the Applications of Evolutionary Computation (Part of EvoStar) (pp. 506-521). Springer, Cham.
+
+[6] Caldwell, J. R., Watson, R. A., Thies, C., & Knowles, J. D. (2018). Deep optimisation: Solving combinatorial optimisation problems using deep neural networks. arXiv preprint arXiv:1811.00784.
+
+[7] Caldwell, J. R., & Watson, R. A. (2017, July). How to get more from your model: the role of constructive selection in estimation of distribution algorithms. In Proceedings of the Genetic and Evolutionary Computation Conference Companion (pp. 101-102).
