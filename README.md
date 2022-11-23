@@ -20,7 +20,7 @@ Also included is running the MKP with with the AE and VAE model, which can be us
 QUBO problem instances from [3], ranging from sizes 100, 500, and 1000, are included in this repository. They are easily run by substituting the problem type in the MKP script examples with the QUBO problem type. In this case, it is recommended to use the GPU for problem sizes > 100. Approximate maximum fitnesses can also be found in [3], although for some problems these are known to not be global maxima.
 
 # Prerequisites
-The only prerequisites for this project are matplotlib and pytorch. If not already installed, they can be installed by navigating to the root folder of this repository in the command prompt and running `python3 pip install -r requirements.txt`.
+The only prerequisites for this project are matplotlib and pytorch. If not already installed, they can be installed by navigating to the root folder of this repository in the command prompt and running `pip install -r requirements.txt`.
 
 # Contact
 If there are any issues or questions feel free to contact me via email at sl2g19@soton.ac.uk
