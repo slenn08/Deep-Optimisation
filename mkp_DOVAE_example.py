@@ -7,15 +7,15 @@ from OptimVAE import OptimVAEHandler
 
 # Highly recommended to keep as cpu for problems of size <= 100
 device = "cuda" if torch.cuda.is_available() else "cpu"
-#device="cpu"
+device="cpu"
 print(device)
 device = torch.device(device)
 
 change_tolerance = 100
 problem_size = 100
 pop_size = 100
-#problem = MKP("COProblems\\mkp\\problems30d.txt", "COProblems\\mkp\\fitnesses30d.txt", 22, device=device)
-problem = QUBO("COProblems\\qubo\\bqp1000.txt", 0, device=device)
+problem = MKP("COProblems\\mkp\\problems30d.txt", "COProblems\\mkp\\fitnesses30d.txt", 0, device=device)
+#problem = QUBO("COProblems\\qubo\\bqp1000.txt", 0, device=device)
 print("Max fitness: {}".format(problem.max_fitness))
 
 lr = 0.002
